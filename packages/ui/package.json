@@ -1,6 +1,6 @@
 {
   "name": "@abraxas/ui",
-  "version": "0.1.0",
+  "version": "0.5.1",
   "private": true,
   "description": "Design tokens y materiales de AbrxsVAV — cumple docs/UI_CANON.md",
   "main": "src/tokens.css",

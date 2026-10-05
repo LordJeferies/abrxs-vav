@@ -2,7 +2,7 @@
    Compila el Production Graph en instrucciones funcionales: qué agregar, dónde,
    con qué valores y por qué — para montar la pieza en CapCut, DaVinci (o por MCP),
    con la misma verdad que usa la app (el NlePlan SIEMPRE se compila del grafo). */
-import type { Project } from '@abraxas/contracts';
+import { ABRXS_VERSION, type Project } from '@abraxas/contracts';
 
 export interface CoachStep {
   n: number; title: string; app: string;
@@ -81,5 +81,5 @@ export function buildCoachPlan(project: Project, target: 'capcut' | 'davinci' | 
     ].join('\n')),
     'TIP: este mismo plan es consumible por un agente con el MCP de DaVinci/CapCut — cada paso tiene rango, contenido y valores exactos.'
   ].join('\n');
-  return { projectId: project.id, projectName: project.content.name, fps: `${g.timebase.fpsNumerator}/${g.timebase.fpsDenominator}`, summary, steps, txt, note: 'Compilado desde el grafo (v0.5.0). El plan completo NlePlan (FCPXML/EDL/kits) llega en el paso 8.' };
+  return { projectId: project.id, projectName: project.content.name, fps: `${g.timebase.fpsNumerator}/${g.timebase.fpsDenominator}`, summary, steps, txt, note: `Compilado desde el grafo (v${ABRXS_VERSION}). El plan completo NlePlan (FCPXML/EDL/kits) llega en el paso 8.` };
 }

@@ -84,3 +84,20 @@ nunca secretos; undo/redo expuestos como acciones.
   con agentes después.
 - Foundation ya trae Playwright + smoke scripts (`npm run smoke`, `npm run test:ui`) —
   se extienden, no se duplican.
+
+## 3. Paridad ActionCatalog ↔ MCP (desde 0.5.1)
+
+`tests/mcp-parity.test.ts` audita el código real de `mcp/server.mjs` contra
+`apps/service/src/catalog.ts` (fuente de verdad) y falla si:
+
+- un tool llama a una acción que no existe en el catálogo;
+- una acción del catálogo no es alcanzable por ningún tool (salvo alias documentados
+  en `ALIAS_ACTIONS` — hoy solo `vav.motion.render`, cubierto por `vav_motion_render`
+  → `vav.jobs.create` con `kind=motion.render`);
+- hay tools huérfanos (sin `case` en `callTool`) o casos sin tool;
+- una acción destructiva no pasa por el check de `confirm:true`.
+
+Estado 0.5.1: **29 acciones ↔ 29 tools** (hueco corregido: `vav.clients.create` →
+nueva tool `vav_clients_create`). `vav_create_job` acepta `target {kind,ref}` y
+`payload` para trabajos con objetivo explícito. La versión del servidor MCP se hereda
+de `/api/health` (fuente única `ABRXS_VERSION`) — nunca hardcodeada.

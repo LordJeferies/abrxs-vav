@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "abrxs.media-source.v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "master",
+        "proxy",
+        "audio",
+        "image",
+        "video",
+        "generated_video",
+        "final_render"
+      ]
+    },
+    "ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hash": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "hashAlgorithm": {
+      "type": "string",
+      "enum": [
+        "sha256"
+      ]
+    },
+    "durationFrames": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "timebase": {
+      "type": "object",
+      "properties": {
+        "fpsNumerator": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fpsDenominator": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "fpsNumerator",
+        "fpsDenominator"
+      ],
+      "additionalProperties": false
+    },
+    "width": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "height": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "codec": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audio": {
+      "type": "object",
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "channels": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sampleRate": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "present"
+      ],
+      "additionalProperties": false
+    },
+    "proxyRef": {
+      "type": "string"
+    },
+    "waveformRef": {
+      "type": "string"
+    },
+    "filmstripRef": {
+      "type": "string"
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "kind",
+    "ref"
+  ],
+  "additionalProperties": false,
+  "$id": "https://abraxas.local/schemas/media-source.v1.json"
+}

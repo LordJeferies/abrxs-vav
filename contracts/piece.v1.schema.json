@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "abrxs.piece.v1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceRange": {
+      "type": "object",
+      "properties": {
+        "startFrame": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "endFrame": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "startFrame",
+        "endFrame"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "default": "draft",
+      "type": "string",
+      "enum": [
+        "draft",
+        "cutting",
+        "ready",
+        "review",
+        "approved",
+        "exported",
+        "failed"
+      ]
+    },
+    "transcriptRef": {
+      "type": "string"
+    },
+    "outputRefs": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "eventRefs": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "createdFrom": {
+          "type": "string",
+          "enum": [
+            "manual_cut",
+            "auto_segment",
+            "visual_plan",
+            "import",
+            "generation",
+            "unknown"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "createdFrom",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "label",
+    "projectId",
+    "sourceRef",
+    "sourceRange",
+    "status",
+    "outputRefs",
+    "eventRefs",
+    "provenance"
+  ],
+  "additionalProperties": false,
+  "$id": "https://abraxas.local/schemas/piece.v1.json"
+}

@@ -1,5 +1,30 @@
 # Cambios
 
+## AbrxsVAV 0.5.1 · 2026-10-05 (core hardening A — rama `dev/0.5.1-media-core`)
+
+- **Tiempo canónico con helpers racionales** (`packages/contracts/src/time.ts`):
+  `framesToSeconds` / `secondsToFrames` / `framesToTimecode` / `timecodeToFrames` con
+  timebase racional y drop-frame SMPTE real (`;` en 30000/1001 y 60000/1001). Los 8 fps
+  del milestone probados con round-trip; nada hardcodea 30 fps.
+- **Contratos v2.5 (delta aditivo)**: `Piece` (`abrxs.piece.v1` — pieza individual con
+  sourceRange por frames, provenance y relación explícita con el Production Graph),
+  `MediaSource` (`abrxs.media-source.v1` — ref opaca, sin FFmpeg en el contrato) y
+  **Job target + payload** (`target {kind,ref}` + `payload` en `abraxas.job.v2`).
+  JSON Schemas generados (`piece.v1`, `media-source.v1`).
+- **Jobs con objetivo explícito**: `JobEngine.enqueue` acepta `{target,payload}`
+  (incluidos en el fingerprint de idempotencia SOLO cuando el caller los pasa
+  explícitamente — sin options, el fingerprint es EXACTAMENTE el legacy
+  `{kind,revision,content}` y los jobs persistidos antes de 0.5.1 siguen
+  deduplicando); `POST /api/jobs` y la tool MCP
+  `vav_create_job` los aceptan; `media.generate` / `motion.render` resuelven el evento
+  del target — nunca "el primer evento compatible". Compatible con jobs v2 en disco.
+- **Versión normalizada**: `ABRXS_VERSION` (contracts) = fuente única; manifests,
+  Tauri, health/catalog, Doctor, coach y MCP (heredada de /api/health) alineados a
+  0.5.1; test de consistencia anti-deriva.
+- **Paridad MCP ↔ ActionCatalog**: nuevo test que audita el código real del MCP contra
+  el catálogo (29 acciones ↔ 29 tools). Hueco corregido: +tool `vav_clients_create`.
+- Tests: 32 → 70 (time, media-core/piece/media-source/job-target, version, mcp-parity).
+
 ## AbrxsVAV 0.5.0 · 2026-10-05 (hito Visual Studio + modularidad + coach)
 
 - **Prompt Studio** (`packages/prompts`): catálogos de cine (7 cámaras, 6 lentes, 6 luz,

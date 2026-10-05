@@ -21,10 +21,21 @@ export const projectSchema = z.strictObject({
   history:z.strictObject({ undo:z.array(operationSchema).max(100), redo:z.array(operationSchema).max(100) })
 }).refine(p => p.id === p.content.graph.projectId && [...p.history.undo, ...p.history.redo].every(o => o.before.graph.projectId === p.id && o.after.graph.projectId === p.id), {message:'El graph y su historial deben pertenecer al proyecto.'});
 export type Project = z.infer<typeof projectSchema>;
+/* v2.5 (0.5.1): objetivo explícito del job — qué procesa, nunca "el primer evento compatible". */
+export const jobTargetKindSchema = z.enum(['project','piece','event','asset','media_source']);
+export type JobTargetKind = z.infer<typeof jobTargetKindSchema>;
+export const jobTargetSchema = z.strictObject({ kind: jobTargetKindSchema, ref: z.string().min(1) });
+export type JobTarget = z.infer<typeof jobTargetSchema>;
+export const jobPayloadSchema = z.record(z.string(), z.unknown());
+export type JobPayload = z.infer<typeof jobPayloadSchema>;
+/** Target por defecto de un job legado sin target: el proyecto completo. */
+export const defaultJobTarget = (projectId:string):JobTarget => ({ kind:'project', ref:projectId });
+
 export const jobSchema = z.strictObject({
   schemaVersion:z.literal('abraxas.job.v2'), id:z.string().uuid(), projectId:z.string().uuid(), kind:z.string(), handler:z.string(), status:z.enum(['queued','running','completed','failed','cancelled']),
   inputFingerprint:z.string(), input:projectContentSchema, sourceRevision:z.number().int().nonnegative(), progress:z.number().min(0).max(1), attempt:z.number().int().nonnegative(), maxAttempts:z.number().int().positive(),
-  createdAt:z.string(), updatedAt:z.string(), error:z.string().optional(), output:z.string().optional(), interrupted:z.boolean().optional()
+  createdAt:z.string(), updatedAt:z.string(), error:z.string().optional(), output:z.string().optional(), interrupted:z.boolean().optional(),
+  target:jobTargetSchema.optional(), payload:jobPayloadSchema.optional()
 });
 export type Job = z.infer<typeof jobSchema>;
 
@@ -179,3 +190,80 @@ export const resolvedConfigSchema = z.strictObject({
   clientId: z.string().nullable(), entries: z.array(resolvedEntrySchema)
 });
 export type ResolvedConfig = z.infer<typeof resolvedConfigSchema>;
+
+/* ═══ ABRXSVAV v2.5 — MEDIA CORE: MediaSource + Piece + Job target (0.5.1) ═══
+   Delta aditivo (REQUISITOS A6: separar PROYECTO de PIEZAS). Tiempo canónico =
+   frames enteros out-exclusivo con timebase racional; helpers en ./time.
+   Ningún detalle de FFmpeg entra en estos contratos: las rutas/refs son opacas. */
+
+export * from './time';
+export * from './version';
+
+export const mediaSourceKindSchema = z.enum(['master','proxy','audio','image','video','generated_video','final_render']);
+export type MediaSourceKind = z.infer<typeof mediaSourceKindSchema>;
+
+/** Pista de audio declarada (presencia + datos conocidos; nunca decodificamos aquí). */
+export const audioTrackSchema = z.strictObject({
+  present: z.boolean(),
+  channels: z.number().int().positive().optional(),
+  sampleRate: z.number().int().positive().optional()
+});
+export type AudioTrack = z.infer<typeof audioTrackSchema>;
+
+/** Fuente de medios: el átomo de ingest de Canter/dresser. ref = ruta o URI opaca. */
+export const mediaSourceSchema = z.strictObject({
+  schemaVersion: z.literal('abrxs.media-source.v1'),
+  id: z.string().min(1).max(120),
+  kind: mediaSourceKindSchema,
+  ref: z.string().min(1),
+  hash: z.string().min(8).max(128).optional(),
+  hashAlgorithm: z.enum(['sha256']).optional(),
+  durationFrames: z.number().int().nonnegative().optional(),
+  timebase: timebaseSchema.optional(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  codec: z.string().min(1).optional(),
+  audio: audioTrackSchema.optional(),
+  proxyRef: z.string().optional(),
+  waveformRef: z.string().optional(),
+  filmstripRef: z.string().optional(),
+  extensions: z.record(z.string(), z.unknown()).optional()
+}).refine(m => m.durationFrames==null||m.durationFrames===0||!!m.timebase, { message: 'durationFrames requiere timebase racional.', path: ['timebase'] });
+export type MediaSource = z.infer<typeof mediaSourceSchema>;
+
+export const pieceStatusSchema = z.enum(['draft','cutting','ready','review','approved','exported','failed']);
+export type PieceStatus = z.infer<typeof pieceStatusSchema>;
+
+/** Rango sobre una fuente, en frames out-exclusivos de SU timebase. */
+export const frameRangeSchema = z.strictObject({
+  startFrame: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  endFrame: z.number().int().positive().max(Number.MAX_SAFE_INTEGER)
+}).refine(r => r.endFrame > r.startFrame, { message: 'El final debe ser posterior al inicio.', path: ['endFrame'] });
+export type FrameRange = z.infer<typeof frameRangeSchema>;
+
+/** Procedencia mínima: cómo nació la pieza y cuándo (AGENTS §8: todo asset con provenance). */
+export const pieceProvenanceSchema = z.strictObject({
+  createdFrom: z.enum(['manual_cut','auto_segment','visual_plan','import','generation','unknown']),
+  createdAt: z.string(),
+  note: z.string().optional()
+});
+export type PieceProvenance = z.infer<typeof pieceProvenanceSchema>;
+
+/** Pieza individual derivada de una fuente: clip vertical/horizontal, segmento,
+    material derivado o miembro de un batch futuro. No reemplaza al Production
+    Graph: le pertenece por projectId y lo referencia por eventRefs. */
+export const pieceSchema = z.strictObject({
+  schemaVersion: z.literal('abrxs.piece.v1'),
+  id: z.string().min(1).max(120),            // "C01", "P07"…
+  label: z.string().trim().min(1).max(160),
+  projectId: z.string().min(1),              // pertenencia al Production Graph
+  sourceRef: z.string().min(1),              // id de una MediaSource
+  sourceRange: frameRangeSchema,
+  status: pieceStatusSchema.default('draft'),
+  transcriptRef: z.string().optional(),
+  outputRefs: z.array(z.string()).default([]), // renders/exports de la pieza
+  eventRefs: z.array(z.string()).default([]),  // eventos del grafo que cubre
+  provenance: pieceProvenanceSchema,
+  extensions: z.record(z.string(), z.unknown()).optional()
+});
+export type Piece = z.infer<typeof pieceSchema>;

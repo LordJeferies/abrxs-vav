@@ -1,4 +1,4 @@
-import { jobSchema, type Job, type Project } from '@abraxas/contracts';
+import { jobSchema, defaultJobTarget, type Job, type JobPayload, type JobTarget, type Project } from '@abraxas/contracts';
 import { NotFoundError, SerialQueue, type Repository } from './project-store';
 export type JobHandler = (job:Job,context:{signal:AbortSignal;progress:(value:number)=>Promise<void>})=>Promise<string>;
 export interface JobEngineOptions {
@@ -14,14 +14,23 @@ export class JobEngine {
   async recover(){
     await this.queue.run(async()=>{for(const job of await this.list()) if(job.status==='running') await this.save({...job,status:'failed',interrupted:true,error:'La aplicación se cerró durante este trabajo. Puedes reintentarlo.'});}); this.pump();
   }
-  enqueue(project:Project,kind:string):Promise<Job>{
+  /** Opciones v2.5 (0.5.1): target explícito (nunca resolver "el primer evento compatible") y payload libre.
+      Sin target, el job es sobre el proyecto completo (legado, compatible con jobs existentes).
+      COMPATIBILIDAD DE IDEMPOTENCIA: el fingerprint se calcula sobre los target/payload CRUDOS
+      (no sobre el default) — sin options explícitas, JSON.stringify omite las claves undefined y
+      el string hash es EXACTAMENTE el legacy {kind,revision,content}; los jobs persistidos antes
+      de 0.5.1 siguen deduplicando tras actualizar. Con target/payload explícitos entra el nuevo
+      formato {kind,revision,content,target,payload}. */
+  enqueue(project:Project,kind:string,options?:{target?:JobTarget;payload?:JobPayload}):Promise<Job>{
     return this.queue.run(async()=>{
       if(!this.handlers[kind])throw new Error('Tipo de trabajo no disponible.');
-      const inputFingerprint=this.fingerprint(JSON.stringify({kind,revision:project.revision,content:project.content}));
+      const target=options?.target??defaultJobTarget(project.id);
+      const payload=options?.payload;
+      const inputFingerprint=this.fingerprint(JSON.stringify({kind,revision:project.revision,content:project.content,target:options?.target,payload:options?.payload}));
       const existing=(await this.list()).find(j=>j.inputFingerprint===inputFingerprint && ['queued','running','completed'].includes(j.status));
       if(existing)return existing;
       const timestamp=new Date().toISOString();
-      const job=jobSchema.parse({schemaVersion:'abraxas.job.v2',id:crypto.randomUUID(),projectId:project.id,kind,handler:kind,status:'queued',inputFingerprint,input:project.content,sourceRevision:project.revision,progress:0,attempt:0,maxAttempts:3,createdAt:timestamp,updatedAt:timestamp});
+      const job=jobSchema.parse({schemaVersion:'abraxas.job.v2',id:crypto.randomUUID(),projectId:project.id,kind,handler:kind,status:'queued',inputFingerprint,input:project.content,sourceRevision:project.revision,progress:0,attempt:0,maxAttempts:3,createdAt:timestamp,updatedAt:timestamp,target,payload});
       await this.save(job); this.pump(); return job;
     });
   }

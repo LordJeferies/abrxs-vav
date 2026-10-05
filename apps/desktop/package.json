@@ -1,7 +1,7 @@
 {
   "name": "@abraxas/desktop",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.5.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,7 @@
     "react-dom": "^19.2.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.9",
-    "@abraxas/contracts": "0.2.0"
+    "@abraxas/contracts": "0.5.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.8.0",

@@ -204,6 +204,37 @@
     },
     "interrupted": {
       "type": "boolean"
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "project",
+            "piece",
+            "event",
+            "asset",
+            "media_source"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "ref"
+      ],
+      "additionalProperties": false
+    },
+    "payload": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
     }
   },
   "required": [

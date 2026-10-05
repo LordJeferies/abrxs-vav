@@ -1,6 +1,6 @@
 {
   "name": "@abraxas/service",
-  "version": "0.2.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,10 +8,10 @@
     "start": "node --import tsx src/server.ts"
   },
   "dependencies": {
-    "@abraxas/core": "0.2.0",
-    "@abraxas/contracts": "0.2.0",
+    "@abraxas/core": "0.5.1",
+    "@abraxas/contracts": "0.5.1",
     "zod": "^4.4.3",
-    "@abraxas/prompts": "0.5.0",
-    "@abraxas/motion": "0.5.0"
+    "@abraxas/prompts": "0.5.1",
+    "@abraxas/motion": "0.5.1"
   }
 }
