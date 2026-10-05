@@ -18,7 +18,14 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.jobs.list', module:'activity', summary:'Lista los trabajos (jobs) con estado y progreso.', method:'GET', path:'/api/jobs', destructive:false, requiresOpenProject:false, since:'0.4.0' },
   { name:'vav.jobs.create', module:'activity', summary:'Encola un trabajo sobre un proyecto (validate / edit-plan).', method:'POST', path:'/api/jobs', destructive:false, requiresOpenProject:true, since:'0.4.0' },
   { name:'vav.jobs.cancel', module:'activity', summary:'Cancela un trabajo en cola o en ejecución.', method:'POST', path:'/api/jobs/:id/cancel', destructive:false, requiresOpenProject:false, since:'0.4.0' },
-  { name:'vav.jobs.retry', module:'activity', summary:'Reintenta un trabajo fallido o cancelado.', method:'POST', path:'/api/jobs/:id/retry', destructive:false, requiresOpenProject:false, since:'0.4.0' }
+  { name:'vav.jobs.retry', module:'activity', summary:'Reintenta un trabajo fallido o cancelado.', method:'POST', path:'/api/jobs/:id/retry', destructive:false, requiresOpenProject:false, since:'0.4.0' },
+  { name:'vav.studio.enhance', module:'visual-lab', summary:'Prompt Studio: añade capas cinematográficas al sujeto (intensidades 1-3) sin tocarlo.', method:'POST', path:'/api/studio/enhance', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.studio.generate', module:'visual-lab', summary:'Genera un visual: crea evento en el grafo (CAS) y encola media.generate (demo/higgsfield/nvidia).', method:'POST', path:'/api/studio/generate', destructive:false, requiresOpenProject:true, since:'0.5.0' },
+  { name:'vav.studio.handoff', module:'visual-lab', summary:'Construye HandoffPackage (.json + .txt) para generar en CUALQUIER IA externa.', method:'POST', path:'/api/studio/handoff', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.providers.status', module:'visual-lab', summary:'Providers de generación registrados y su salud.', method:'GET', path:'/api/providers', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.providers.test', module:'visual-lab', summary:'Test Connection real (HTTP + latencia) contra un provider.', method:'POST', path:'/api/providers/test', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.registries.list', module:'core', summary:'Catálogos modulares versionados (XR, SFX, motion, captions, packs) — extender tipos = agregar entradas.', method:'GET', path:'/api/registries', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.coach.plan', module:'delivery', summary:'Modo coach: plan de montaje paso a paso (qué/cómo/por qué por timecode) compilado del grafo para CapCut/DaVinci.', method:'GET', path:'/api/coach/plan?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */

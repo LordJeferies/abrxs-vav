@@ -41,6 +41,13 @@ const tools = [
   { name: 'vav_create_job', description: 'Encola un trabajo (project.validate | project.edit-plan) sobre un proyecto con su revisión actual.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, kind: { type: 'string', enum: ['project.validate', 'project.edit-plan'] } }, required: ['projectId', 'revision', 'kind'] } },
   { name: 'vav_cancel_job', description: 'Cancela un trabajo activo.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'vav_retry_job', description: 'Reintenta un trabajo fallido o cancelado.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
+  { name: 'vav_studio_enhance', description: 'Prompt Studio: añade capas de cine (cámara/lente/luz/stock/atmósfera/grade) al sujeto SIN tocarlo. Intensidad 1-3.', inputSchema: { type: 'object', additionalProperties: false, properties: { subject: { type: 'string' }, intensity: { type: 'number', enum: [1, 2, 3] }, options: { type: 'object', additionalProperties: { type: 'string' }, description: 'camera/lens/light/stock/atmosphere/grade/composition/motion' } }, required: ['subject', 'intensity'] } },
+  { name: 'vav_studio_generate', description: 'Genera un visual: crea evento en el grafo con la receta y encola media.generate. Providers: demo (gratis) | higgsfield | nvidia. Edita el proyecto, usa la revisión actual.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, subject: { type: 'string' }, intensity: { type: 'number', enum: [1, 2, 3] }, options: { type: 'object', additionalProperties: { type: 'string' } }, strategy: { type: 'string', enum: ['demo', 'higgsfield', 'nvidia'] }, workflow: { type: 'string' }, aspectRatio: { type: 'string' }, durationSec: { type: 'number' } }, required: ['projectId', 'revision', 'subject', 'intensity'] } },
+  { name: 'vav_studio_handoff', description: 'Construye HandoffPackage (.json + .txt) con prompt mejorado + expectedFilename para generar en CUALQUIER IA externa (kling/veo/runway/freepik/higgsfield/generic).', inputSchema: { type: 'object', additionalProperties: false, properties: { targetRef: { type: 'string' }, subject: { type: 'string' }, intensity: { type: 'number', enum: [1, 2, 3] }, options: { type: 'object', additionalProperties: { type: 'string' } }, providerHint: { type: 'string' }, aspectRatio: { type: 'string' }, expectedFilename: { type: 'string' } }, required: ['targetRef', 'subject', 'intensity'] } },
+  { name: 'vav_providers_status', description: 'Providers de generación (demo/higgsfield/nvidia) y si tienen clave configurada.', inputSchema: { type: 'object', additionalProperties: false } },
+  { name: 'vav_providers_test', description: 'Test Connection real contra un provider (HTTP code + latencia).', inputSchema: { type: 'object', additionalProperties: false, properties: { provider: { type: 'string', enum: ['demo', 'higgsfield', 'nvidia'] } }, required: ['provider'] } },
+  { name: 'vav_registries_list', description: 'Catálogos modulares versionados (familias XR, SFX, motions, presets de captions, packs) — extensible por datos.', inputSchema: { type: 'object', additionalProperties: false } },
+  { name: 'vav_coach_plan', description: 'Modo coach: plan de montaje paso a paso (qué/cómo/por qué por timecode) compilado del grafo, para terminar el video en CapCut/DaVinci o por MCP.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, target: { type: 'string', enum: ['capcut', 'davinci', 'any'] } }, required: ['id'] } },
   { name: 'vav_smoke', description: 'Prueba E2E del core: crea un proyecto temporal, valida, hace undo/redo y limpia. Útil para verificar la app por código.', inputSchema: { type: 'object', additionalProperties: false } }
 ];
 
@@ -58,6 +65,13 @@ async function callTool(name, args) {
     case 'vav_create_job': return api('vav.jobs.create', args);
     case 'vav_cancel_job': return api('vav.jobs.cancel', args);
     case 'vav_retry_job': return api('vav.jobs.retry', args);
+    case 'vav_studio_enhance': return api('vav.studio.enhance', args);
+    case 'vav_studio_generate': return api('vav.studio.generate', args);
+    case 'vav_studio_handoff': return api('vav.studio.handoff', args);
+    case 'vav_providers_status': return api('vav.providers.status');
+    case 'vav_providers_test': return api('vav.providers.test', args);
+    case 'vav_registries_list': return api('vav.registries.list');
+    case 'vav_coach_plan': return api('vav.coach.plan', args);
     case 'vav_smoke': {
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
       const project = await api('vav.projects.create', { name: `SMOKE_${stamp}`, timebase: { fpsNumerator: 30000, fpsDenominator: 1001 } }, { internal: true });

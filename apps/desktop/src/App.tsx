@@ -2,6 +2,7 @@ import { useWorkspace } from './workspace';
 import { ProjectHub } from './ProjectHub';
 import { Activity } from './Activity';
 import { ModuleErrorBoundary } from './ModuleErrorBoundary';
+import { VisualStudio } from './VisualStudio';
 import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 const Workflow = lazy(()=>import('./Workflow'));
 
@@ -11,7 +12,7 @@ const stations: {id:Station; label:string; description:string; status?:string}[]
   {id:'plan',label:'Plan',description:'Idea · Beta · Alfa · guion · Visual Plan',status:'planned'},
   {id:'canter',label:'Canter',description:'Transcribir · alinear · seleccionar · cortar',status:'adapter'},
   {id:'dresser',label:'Dresser',description:'B-roll · XR · captions · motion · SFX',status:'planned'},
-  {id:'visual',label:'Visual Lab',description:'Buscar · generar · comparar · mejorar',status:'planned'},
+  {id:'visual',label:'Visual Lab',description:'Visual Studio · buscar · generar · comparar',status:'studio-v1'},
   {id:'workflow',label:'Workflow Studio',description:'Recipes y automatización audiovisual',status:'prototype'},
   {id:'review',label:'Review',description:'Notas · comparar · aprobar',status:'companion'},
   {id:'delivery',label:'Delivery',description:'MP4 · assets · DaVinci · CapCut',status:'planned'},
@@ -36,7 +37,7 @@ export function App(){
     <main>
       <header className="topbar glass"><div><small>PROYECTO</small><h1>{w.project?.content.name||'Sin proyecto abierto'}</h1></div><div className="status"><span className={`dot ${w.connected?'':'offline'}`}/>{w.busy?'Guardando…':w.connected?'Servicio local conectado':'Servicio local desconectado'}</div></header>
       {w.error&&<div className="error-banner" role="alert"><span>{w.error}</span><button disabled={w.busy} onClick={()=>void w.reload()}>Recargar datos</button><button onClick={()=>w.setError('')}>Cerrar</button></div>}
-      {!w.ready?<div className="content">Abriendo tu estudio…</div>:<ModuleErrorBoundary key={active} moduleId={active}>{active==='hub'?<ProjectHub workspace={w}/>:active==='activity'?<Activity workspace={w}/>:active==='workflow'?<Suspense fallback={<div className="content">Abriendo Workflow Studio…</div>}><Workflow/></Suspense>:<StationPage title={station.label} description={station.description} status="Pendiente de implementación"/>}</ModuleErrorBoundary>}
+      {!w.ready?<div className="content">Abriendo tu estudio…</div>:<ModuleErrorBoundary key={active} moduleId={active}>{active==='hub'?<ProjectHub workspace={w}/>:active==='activity'?<Activity workspace={w}/>:active==='workflow'?<Suspense fallback={<div className="content">Abriendo Workflow Studio…</div>}><Workflow/></Suspense>:active==='visual'?<VisualStudio workspace={w}/>:<StationPage title={station.label} description={station.description} status="Pendiente de implementación"/>}</ModuleErrorBoundary>}
     </main>
   </div>
 }

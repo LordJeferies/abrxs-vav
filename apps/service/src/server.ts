@@ -9,6 +9,10 @@ import { projectSchema, jobSchema, projectContentSchema, timebaseSchema } from '
 import { FileRepository } from './file-repository';
 import { handlers } from './handlers';
 import { catalog } from './catalog';
+import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
+import { providerStatus, testConnection } from './providers';
+import { registries } from './registries';
+import { buildCoachPlan } from './coach';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const dataDirectory=resolve(process.env.ABRAXAS_DATA_DIR||join(root,'.abraxas-data'));
@@ -60,10 +64,29 @@ const server=createServer(async(req,res)=>{
       }
       if(resource==='jobs'){
         if(req.method==='GET'&&!id){send(res,200,await engine.list());return;}
-        if(req.method==='POST'&&!id){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),kind:z.enum(['project.validate','project.edit-plan'])}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear el trabajo.');send(res,201,await engine.enqueue(project,input.kind));return;}
+        if(req.method==='POST'&&!id){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),kind:z.enum(['project.validate','project.edit-plan','media.generate'])}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear el trabajo.');send(res,201,await engine.enqueue(project,input.kind));return;}
         if(req.method==='POST'&&id&&action==='cancel'){send(res,200,await engine.cancel(id));return;}
         if(req.method==='POST'&&id&&action==='retry'){send(res,200,await engine.retry(id));return;}
       }
+      if(resource==='studio'){
+        // Prompt Studio (capa 1 — docs/HIGGSFIELD_INTEGRATION.md): in-process, sin coste
+        if(req.method==='POST'&&id==='enhance'&&!action){const input=z.strictObject({subject:z.string().min(1),intensity:z.union([z.literal(1),z.literal(2),z.literal(3)]),options:z.record(z.string(),z.string()).default({})}).parse(await body(req));send(res,200,enhancePrompt(input.subject,input.intensity,input.options as EnhanceOptions));return;}
+        if(req.method==='POST'&&id==='handoff'&&!action){const input=z.strictObject({targetRef:z.string().min(1),subject:z.string().min(1),intensity:z.union([z.literal(1),z.literal(2),z.literal(3)]),options:z.record(z.string(),z.string()).default({}),providerHint:z.string().default('generic'),aspectRatio:z.string().optional(),durationSec:z.number().optional(),expectedFilename:z.string().optional()}).parse(await body(req));const result=enhancePrompt(input.subject,input.intensity,input.options as EnhanceOptions);const pkg=buildHandoff(result,{targetRef:input.targetRef,providerHint:input.providerHint,aspectRatio:input.aspectRatio,durationSec:input.durationSec,expectedFilename:input.expectedFilename});const txt=['HANDOFF ABRXSVAV',`PROMPT: ${pkg.prompt}`,`NEGATIVE: ${pkg.negative}`,`OUTPUT: ${pkg.outputSpec.aspectRatio}${pkg.outputSpec.durationSec?` · ${pkg.outputSpec.durationSec}s`:''}`,`GUARDA COMO: ${pkg.expectedFilename}`,pkg.returnInstructions].join('\n');send(res,200,{package:pkg,txt});return;}
+        // Generación (capa 2): edita el grafo (CAS) y encola media.generate
+        if(req.method==='POST'&&id==='generate'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),eventId:z.string().optional(),label:z.string().default('Visual Studio'),subject:z.string().min(1),intensity:z.union([z.literal(1),z.literal(2),z.literal(3)]),options:z.record(z.string(),z.string()).default({}),strategy:z.enum(['demo','higgsfield','nvidia']).default('demo'),workflow:z.string().default('std'),aspectRatio:z.string().default('9:16'),durationSec:z.number().optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de generar.');
+          const result=enhancePrompt(input.subject,input.intensity,input.options as EnhanceOptions);
+          const eventId=input.eventId||`ST${String(project.content.graph.events.length+1).padStart(2,'0')}_studio`;
+          const event={id:eventId,label:input.label,kind:'image' as const,startFrame:0,endFrame:Math.max(1,Math.round((input.durationSec??4)*(project.content.graph.timebase.fpsNumerator/project.content.graph.timebase.fpsDenominator))),status:'ghost' as const,extensions:{purpose:`Visual Studio: ${result.subject.slice(0,80)}`,recipe:{strategy:input.strategy,workflow:input.workflow,prompt:result.prompt,negative:result.negative,params:{aspectRatio:input.aspectRatio,durationSec:input.durationSec},appliedLayers:result.appliedLayers}}};
+          const content={...project.content,graph:{...project.content.graph,events:[...project.content.graph.events.filter(e=>e.id!==eventId),event]}};
+          const edited=await store.edit(input.projectId,input.revision,`Visual Studio · ${result.subject.slice(0,60)}`,content);
+          const job=await engine.enqueue(edited,'media.generate');send(res,201,{project:edited,job,recipe:{prompt:result.prompt,negative:result.negative,appliedLayers:result.appliedLayers,eventId}});return;}
+      }
+      if(resource==='providers'){
+        if(req.method==='GET'&&!id){send(res,200,{providers:providerStatus()});return;}
+        if(req.method==='POST'&&id==='test'&&!action){const input=z.strictObject({provider:z.string().min(1)}).parse(await body(req));send(res,200,await testConnection(input.provider));return;}
+      }
+      if(resource==='registries'&&req.method==='GET'&&!id){send(res,200,{registries});return;}
+      if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
       send(res,404,{error:'Ruta no encontrada.'});return;
     }
     if(req.method!=='GET'){send(res,405,{error:'Método no permitido.'});return;}

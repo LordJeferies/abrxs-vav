@@ -1,8 +1,27 @@
 import { setTimeout as wait } from 'node:timers/promises';
 import { graphSchema } from '@abraxas/contracts';
 import type { JobHandler } from '@abraxas/core';
+import { providers } from './providers';
 
 export const handlers:Record<string,JobHandler>={
+  'media.generate':async(job,{signal,progress})=>{
+    // La receta vive en el evento del grafo (core-integrado): extensions.recipe
+    const event=job.input.graph.events.find(e=>e.extensions&&typeof e.extensions==='object'&&'recipe'in e.extensions);
+    if(!event)throw new Error('El proyecto no tiene ningún evento con receta de generación (extensions.recipe).');
+    const recipe=event.extensions!.recipe as {strategy?:string;workflow?:string;prompt?:string;negative?:string;params?:Record<string,unknown>};
+    const provider=providers[recipe.strategy||'demo']??providers.demo;
+    await progress(0.1);
+    const submitted=await provider.submit({workflow:recipe.workflow||'std',prompt:recipe.prompt||'',negative:recipe.negative||'',params:recipe.params||{}},signal);
+    await progress(0.3);
+    let current=submitted;let ticks=0;
+    while(current.status==='running'&&ticks<60){
+      current=await provider.poll(current,signal);
+      ticks++;await progress(Math.min(0.95,0.3+ticks*0.05));
+      if(current.status==='running')await wait(500,undefined,{signal});
+    }
+    if(current.status==='failed')throw new Error(current.error||'Generación fallida en el provider.');
+    return JSON.stringify({event:event.id,provider:current.providerId,status:current.status,outputs:current.outputs},null,2);
+  },
   'project.validate':async(job,{signal,progress})=>{
     signal.throwIfAborted(); await progress(0.2);
     const graph=graphSchema.parse(job.input.graph); await progress(0.7); signal.throwIfAborted();

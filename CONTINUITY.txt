@@ -1,0 +1,74 @@
+# AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
+
+> Última actualización: 2026-10-05 (v0.5.0)
+
+## A. Modo COACH — el productor de video que dice el paso a paso
+
+**GET /api/coach/plan?projectId=…** (y tool MCP `vav_coach_plan`) compila el
+Production Graph en un **plan de montaje funcional**: pasos ordenados por timecode,
+cada uno con QUÉ hacer, CÓMO hacerlo y POR QUÉ — como un coach productor que te va
+guiando al terminar el video en CapCut o DaVinci.
+
+- Formato: JSON (`steps[]`) + TXT humano listo para pegar en el chat del editor.
+- Los pasos se derivan de los eventos reales del grafo (A-roll → B-roll → XR →
+  captions → SFX), con la explicación del motion canónico y el motivo editorial.
+- Es la semilla del NlePlan completo (FCPXML/EDL + kits) del paso 8: misma verdad,
+  primero texto, después archivos de intercambio.
+
+## B. Registries modulares — agregar tipos sin tocar código
+
+**GET /api/registries** (tool MCP `vav_registries_list`) expone los 5 catálogos
+versionados que alimentan Studio, Dresser, coach y Library:
+
+| REGISTRY | ENTRADAS v0.5.0 | CÓMO SE EXTIENDE |
+|---|---|---|
+| xr-families | 7 (canon R6) | agregar entrada con params; el Composer la implementa |
+| sfx-families | 13 con variantes | agregar familia; Library mapea rol→archivo |
+| motion-presets | 10 (zoom ≤ 1.18) | agregar preset con nota de rango |
+| caption-presets | 4 | agregar preset; Client Profile lo asigna |
+| visual-packs | 3 | instalar pack; XR Studio lo lista |
+
+Regla: un tipo nuevo = una entrada de datos, jamás un `if` nuevo. Los módulos
+(subtítulos, cortes, XR…) también se usan **solos o juntos** — cada estación es
+independiente y escribe sobre el mismo grafo.
+
+## C. Roadmap de lo pedido y pendiente (delta sobre BUILD_PLAN_11_STEPS)
+
+| PEDIDO | ESTADO | DÓNDE CAE |
+|---|---|---|
+| Herramientas modulares (solo captions / solo cortes / todo) | ✅ diseño core + registries v0.5.0 | addendum §7 + apps/service/src/registries.ts |
+| App como MCP de edición (estilo DaVinci/AE MCP) | ✅ base real (18 tools vav_*) — crece por paso | mcp/server.mjs + docs/MCP_INTEGRATION.md |
+| Modo coach (paso a paso CapCut/DaVinci con explicaciones) | ✅ v0.5.0 (/api/coach/plan) | NlePlan completo en paso 8 |
+| PWA móvil con comandos precargados | 🚧 parte 1 hecha (sitio instalable) | paso 4: companion + cola vav_commands en Supabase (comandos hechos offline se ejecutan al abrir el desktop) |
+| Google Drive (cargar/descargar, buscador de archivos) | ⏳ paso 4-5 | docs/CLOUD_AND_PROVIDERS.md §2 (readonly-first, OAuth split) |
+| Asistente en la PWA que guía qué hacer para terminar un video | ✅ asistente local del sitio + coach en desktop | extender KB con los planes del coach |
+| Higgsfield (workflows async/poll, soul-styles, prompt alchemy) | ✅ capas 1-2 (Studio + providers) | docs/HIGGSFIELD_INTEGRATION.md — validar con key real del usuario |
+| Editor de escenas del guion / cinema studio / short studio completos | ⏳ paso 5 (Dresser MVP) | el wizard de Visual Studio es su fundamento |
+
+## D. Cómo continuar el desarrollo (para cualquier IA)
+
+1. Lee `ROADMAP.txt` (orden de lectura, reglas, verificación) y este archivo.
+2. Estado exacto: `docs/IMPLEMENTATION_STATUS.md` (REAL/MOCK/PENDIENTE) y `CHANGELOG.md`.
+3. Antes de tocar código: `npm ci && npm run check && npm test && npm run build` (todo verde).
+4. Contrato de release: cada tarea = commit claro + actualización de estos 3 docs +
+   push. El sitio (repo `abrxsvavstatus`) refleja el estado EN VIVO desde aquí —
+   no hay que tocarlo para actualizar el progreso (lee ROADMAP.txt de este repo).
+5. Al terminar un paso: mover checkbox en ROADMAP.txt (`[x] PASO N`) y actualizar la
+   línea `SIGUIENTE ACCIÓN`.
+
+## E. Contexto para IA de SOPORTE técnico
+
+Si el usuario pide soporte, actúa como técnico de la app con este contexto:
+
+- **Síntomas frecuentes y solución**: sitio oficial → soporte
+  (https://lordjeferies.github.io/abrxsvavstatus/support.html) — mismas respuestas
+  que el asistente local del sitio (base: assets/knowledge.js del repo del sitio).
+- **Doctor**: la salud se consulta con vav_doctor/vav_status (MCP) o `npm run doctor`.
+  Diagnóstico de módulo caído: Error Boundary → "Copiar diagnóstico".
+- **Claves**: HF_API_KEY (KEY_ID:KEY_SECRET, de un solo uso) y NVIDIA_API_KEY (nvapi-)
+  van SOLO en el entorno del servicio; vav_providers_test devuelve HTTP+latencia real.
+  El provider Demo siempre está disponible sin claves.
+- **Datos**: todo en `.abraxas-data/` (local, escrituras atómicas con .bak). No está
+  en Git; no publicarla. Recuperación post-crash: Activity → Reanudar/Reiniciar.
+- **Puertos**: UI 1420 (dev) / 4317 (servicio). El MCP requiere el servicio corriendo.
+- Si algo no está en estos docs, márcalo como PENDIENTE — nunca inventar features.
