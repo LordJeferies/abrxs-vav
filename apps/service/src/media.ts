@@ -3,23 +3,30 @@
    waveform, corte frame-accurate, Ken Burns, captions quemadas, render final.
    Todo local. Errores humanos, timeouts por proceso (watchdog del JobEngine aparte). */
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { mkdtemp, mkdir, rm, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, basename } from 'node:path';
 
 function run(cmd: string, args: string[], timeoutMs = 600_000): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
+    // execFile con argv: NUNCA shell → los paths con espacios/acentos/'()[] no interpolan nada.
     execFile(cmd, args, { timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) reject(new Error(`${cmd} falló: ${(stderr || err.message).slice(-600)}`));
       else resolve({ stdout, stderr });
     });
   });
 }
-export const sha256File = async (p: string): Promise<string> => {
-  const buf = await readFile(p);
-  return createHash('sha256').update(buf).digest('hex');
-};
+/* ── Hash streaming: memoria ~constante (chunks de 1 MiB) aunque el máster pese GB. ── */
+export const sha256File = (p: string): Promise<string> => new Promise((resolve, reject) => {
+  const hash = createHash('sha256');
+  const stream = createReadStream(p, { highWaterMark: 1024 * 1024 });
+  stream.on('data', chunk => hash.update(chunk));
+  stream.on('error', (err: NodeJS.ErrnoException) =>
+    reject(new Error(`No se pudo leer ${p} para calcular el hash: ${err.code ?? ''} ${err.message}`.trimEnd())));
+  stream.on('end', () => resolve(hash.digest('hex')));
+});
 
 /* ── Probe ── */
 export interface MediaInfo {
