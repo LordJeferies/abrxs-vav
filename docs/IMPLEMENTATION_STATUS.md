@@ -1,7 +1,27 @@
-# Implementation Status · AbrxsVAV 0.4.0 (pasos 0–1 del plan de 11)
+# Implementation Status · AbrxsVAV 0.5.0 (pasos 0–1 + hito Visual Studio)
 
-> Base heredada: Foundation 0.2.0 (su estado REAL/MOCK/PENDIENTE sigue válido y está en
-> la sección inferior de este archivo). Este bloque refleja el delta AbrxsVAV.
+> Base heredada: Foundation 0.2.0 (su estado REAL/MOCK/PENDIENTE sigue válido y está
+> en la sección inferior). Este bloque refleja el delta AbrxsVAV.
+
+## REAL (0.5.0 — hito Visual Studio + modularidad + coach)
+
+- Prompt Studio (`packages/prompts`): catálogos de cine + motor enhance con sujeto
+  intacto (3 intensidades) + motions canon R6 → lenguaje de cámara + buildHandoff()
+  para CUALQUIER IA. 5 tests propios (20/20 totales).
+- Providers de generación: Higgsfield real (POST→request_id→poll, soul-styles,
+  test connection HTTP+latencia), NVIDIA NIM (imágenes), Demo (pipeline completo
+  sin claves). Claves solo en el entorno del servicio.
+- Visual Studio en el desktop: wizard con referencias, generar integrado al grafo
+  (evento con receta vía CAS + job media.generate), handoff .txt, providers panel.
+- Registries modulares (/api/registries): 5 catálogos versionados — XR(7), SFX(13),
+  motion(10), captions(4), packs(3). Extender tipos = datos, no código.
+- Modo Coach (/api/coach/plan + vav_coach_plan): plan de montaje QUÉ/CÓMO/POR QUÉ
+  por timecode compilado del grafo para CapCut/DaVinci.
+- MCP a 18 tools (studio×3, providers×2, registries, coach). E2E por MCP y HTTP
+  verificado: enhance (sujeto intacto + 7 capas), generate demo (evento→job
+  completed), handoff (expectedFilename), providers status.
+- CONTINUITY.txt (continuación dev para cualquier IA + contexto de soporte).
+- docs/HIGGSFIELD_INTEGRATION.md (3 capas + roadmap de editor de escenas).
 
 ## REAL (0.4.0 — paso 1 completo)
 

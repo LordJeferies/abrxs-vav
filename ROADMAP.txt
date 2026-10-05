@@ -1,7 +1,7 @@
 ════════════════════════════════════════════════════════════════════
   ABRXSVAV — ROADMAP, ESTADO Y CÓMO CONTINUAR
   (AbrxsVAV = Video · Audio · Visual · familia Abraxas · LordJeferies)
-  Última actualización: 2026-10-04
+  Última actualización: 2026-10-05
 ════════════════════════════════════════════════════════════════════
 
 ▸ QUÉ ES ESTE PROYECTO
@@ -53,8 +53,6 @@
         Adapter al motor 3.8.1 · Whisper word-level · MediaService por rangos ·
         confirmación manual de límites. Requiere máster real de podcast del usuario.
         Salida: máster real → 10 piezas en el grafo, exportadas limpias.
-  [ ] PASO 2 — Canter integrado (adapter al motor 3.8.1, MediaService por
-        rangos). Salida: máster real → 10 piezas en el grafo, exportadas.
   [ ] PASO 3 — Vistas compartidas (Lista/Kanban/Mapa XYFlow).
   [ ] PASO 4 — Companion PWA v1 (GitHub Pages) + canal de comandos tipados
         + Supabase (workspace abrxs-vav, tablas vav_state/vav_commands).
