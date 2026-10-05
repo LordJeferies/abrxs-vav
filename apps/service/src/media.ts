@@ -56,11 +56,54 @@ export async function makeProxy(src: string, dir: string): Promise<string> {
   await run('ffmpeg', ['-y', '-i', src, '-vf', "scale=-2:min(540\\,ih)", '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', out]);
   return out;
 }
-export async function makeFilmstrip(src: string, dir: string, cols = 6, rows = 4): Promise<string> {
+
+/* ── Duración ligera (solo contenedor; NO hash-ea el máster para esto) ── */
+export async function probeDurationSec(file: string): Promise<number> {
+  await stat(file);
+  const { stdout } = await run('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', file], 30_000);
+  const j = JSON.parse(stdout) as { format?: { duration?: string } };
+  const duration = Number(j.format?.duration ?? 0);
+  if (!(duration > 0) || !Number.isFinite(duration)) throw new Error(`ffprobe no reportó una duración válida para ${file}.`);
+  return duration;
+}
+
+/** Timestamps (segundos) de N thumbnails repartidos por TODA la duración:
+    midpoint de cada segmento duration/N — determinista y uniforme por construcción. */
+export function planThumbnailTimestamps(durationSec: number, count: number): number[] {
+  if (!Number.isFinite(durationSec) || durationSec <= 0) throw new Error('Duración inválida para el filmstrip.');
+  if (!Number.isInteger(count) || count < 1) throw new Error('El filmstrip necesita al menos 1 thumbnail.');
+  return Array.from({ length: count }, (_, i) => +(durationSec * (i + 0.5) / count).toFixed(3));
+}
+
+/* ── Filmstrip: exactamente N thumbnails uniformes sobre TODA la duración.
+    Un seek por thumbnail (-ss antes de -i): decodifica ~1 frame por punto,
+    memoria ~constante, sin importar el fps (23.976…60). Sin mod(n,X). ── */
+export async function makeFilmstrip(src: string, dir: string, count = 24, cols = 6): Promise<string> {
+  const duration = await probeDurationSec(src);
+  const timestamps = planThumbnailTimestamps(duration, count);
+  const grid = Math.max(1, Math.floor(cols));
+  const rows = Math.ceil(count / grid);
   await mkdir(dir, { recursive: true });
-  const out = join(dir, 'filmstrip.jpg');
-  await run('ffmpeg', ['-y', '-i', src, '-vf', `select='not(mod(n,50))',scale=240:-1,tile=${cols}x${rows}`, '-frames:v', '1', '-q:v', '4', out], 120_000);
-  return out;
+  const framesDir = await mkdtemp(join(tmpdir(), 'abrxs-strip-'));
+  try {
+    for (const [i, t] of timestamps.entries()) {
+      const frame = join(framesDir, `f${String(i).padStart(3, '0')}.jpg`);
+      const args = (at: string): string[] => ['-y', '-ss', at, '-i', src, '-frames:v', '1', '-vf', 'scale=240:-2', '-q:v', '4', frame];
+      try {
+        await run('ffmpeg', args(t.toFixed(3)), 120_000);
+        await stat(frame);
+      } catch {
+        // Seek caído fuera del último frame (contenedores con duración redondeada): reintento al final real.
+        await run('ffmpeg', args(Math.max(0, duration - 0.05).toFixed(3)), 120_000);
+      }
+    }
+    const out = join(dir, 'filmstrip.jpg');
+    await run('ffmpeg', ['-y', '-framerate', '1', '-i', join(framesDir, 'f%03d.jpg'),
+      '-vf', `tile=${grid}x${rows}:color=black`, '-frames:v', '1', '-q:v', '4', out], 120_000);
+    return out;
+  } finally {
+    await rm(framesDir, { recursive: true, force: true });
+  }
 }
 export async function makeWaveform(src: string, dir: string): Promise<string | null> {
   await mkdir(dir, { recursive: true });
