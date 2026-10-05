@@ -1,7 +1,56 @@
-# Implementation Status · AbrxsVAV 0.5.0 (pasos 0–1 + hito Visual Studio)
+# Implementation Status · AbrxsVAV (estado por hito)
 
-> Base heredada: Foundation 0.2.0 (su estado REAL/MOCK/PENDIENTE sigue válido y está
-> en la sección inferior). Este bloque refleja el delta AbrxsVAV.
+> Estado exacto por hito, marcado REAL / MOCK / EXPERIMENTAL / PENDIENTE.
+> Base heredada: Foundation 0.2.0 (su estado sigue válido, sección inferior).
+
+## REAL (0.5.1 — core hardening A: Piece, MediaSource, Job target, tiempo, versiones, paridad)
+
+- **Helpers de tiempo canónicos** (`packages/contracts/src/time.ts`): `framesToSeconds`,
+  `secondsToFrames`, `framesToTimecode`, `timecodeToFrames` con timebase **racional**
+  (fpsNumerator/fpsDenominator) y drop-frame SMPTE real (30000/1001 y 60000/1001;
+  separador `;`). Los 8 fps del milestone validados (23.976/24/25/29.97/30/50/59.94/60)
+  con round-trip exhaustivo DF 0..40000. Sin hardcoded 30 fps. 11 tests.
+- **Contratos v2.5 (delta aditivo sobre v2.4)** en `@abraxas/contracts` + JSON Schemas
+  generados (`contracts/piece.v1.schema.json`, `contracts/media-source.v1.schema.json`,
+  `job.v2` actualizado):
+  - `Piece` (`abrxs.piece.v1`): pieza individual derivada de un source (id, label,
+    projectId, sourceRef, sourceRange por frames out-exclusivos, status, transcriptRef,
+    outputRefs, eventRefs, provenance mínima). Sirve para clips verticales/horizontales,
+    segmentos, material derivado y batch futuro.
+  - `MediaSource` (`abrxs.media-source.v1`): kind (master/proxy/audio/image/video/
+    generated_video/final_render), ref opaca (sin detalles de FFmpeg), hash opcional,
+    durationFrames+timebase, dimensiones, codec, audio, proxy/waveform/filmstrip refs.
+  - **Job target + payload**: `target {kind: project|piece|event|asset|media_source, ref}`
+    y `payload` opcionales en `abraxas.job.v2`. `JobEngine.enqueue(project, kind, {target,
+    payload})` los incluye en el fingerprint de idempotencia; `media.generate` y
+    `motion.render` resuelven EXACTAMENTE el evento del target (nunca "el primer evento
+    compatible"). Compatibilidad: jobs v2 en disco sin target siguen validando
+    (target por defecto = proyecto completo). REAL con tests de compatibilidad.
+- **Versión normalizada**: `ABRXS_VERSION` (`packages/contracts/src/version.ts`) es la
+  fuente única (0.5.1). Alineados: 9 manifests de workspace, `tauri.conf.json`,
+  `/api/health`, `/api/catalog`, Doctor, `coach.ts`, y el MCP (lo hereda de `/api/health`
+  al inicializar, sin hardcodear). `tests/version.test.ts` impide la deriva futura.
+- **Paridad MCP ↔ ActionCatalog** (`tests/mcp-parity.test.ts`): lee el código real de
+  `mcp/server.mjs` y exige (1) todo `api()` apunta a una acción del catálogo, (2) toda
+  acción es alcanzable por ≥1 tool salvo alias documentados (`vav.motion.render` vía
+  `vav.jobs.create`), (3) sin tools huérfanos, (4) confirm:true en destructivas.
+  Hueco detectado y corregido: `vav.clients.create` no tenía tool → nueva `vav_clients_create`.
+  29 acciones ↔ 29 tools. Suite completa: 70/70 tests (baseline 32 + 38 nuevos).
+
+## MOCK / EXPERIMENTAL (0.5.1)
+
+- `Piece` y `MediaSource` son **contratos REAL pero infraestructura PENDIENTE**: aún no
+  hay colección persistida (`pieces/`, `media-sources/`), rutas de servicio ni tools
+  canter_*/dresser_* que los usen. No marcar como feature usable hasta el wire de media.
+- Providers demo/simulados siguen siendo MOCK honesto (demo provider).
+
+## PENDIENTE (0.5.1 → sigue)
+
+- Wire de `apps/service/src/media.ts` (Bloque 1 — otro agente): canter.ingest/export_piece,
+  dresser.render_piece + rutas + MCP +4 tools + tests de parseSrt/keywords/E2E. Al aterrizar,
+  debe usar `Piece`/`MediaSource`/`target` de este hito (frames canónicos, no segundos).
+- `SourceSegment[]` multi-segmento sobre Piece (nota de migración 2 de CONTRACTS_V2_SPEC).
+- Doctor FFmpeg profundo, streaming SHA, filmstrip real (media hardening, otro agente).
 
 ## REAL (0.5.0 — hito Visual Studio + modularidad + coach)
 

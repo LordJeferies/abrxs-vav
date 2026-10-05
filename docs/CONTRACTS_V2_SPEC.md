@@ -250,3 +250,48 @@ export const CacheKey = z.object({
   formatos graph v2/vav.v1.
 - **No contrato**: presets de UI, textos de prompts del Visual Director (son PromptRecords
   versionados, pero su texto puede evolucionar sin bump de schema).
+
+## Delta v2.5 (0.5.1) — MEDIA CORE: Piece, MediaSource, Job target
+
+Implementado en `packages/contracts/src/index.ts` + `time.ts`. Delta **aditivo** sobre
+v2.4; JSON Schemas generados en `contracts/piece.v1.schema.json` y
+`contracts/media-source.v1.schema.json` (job.v2 actualizado). Tiempo canónico = frames
+enteros out-exclusivos con timebase racional; helpers oficiales en `time.ts`
+(`framesToSeconds`, `secondsToFrames`, `framesToTimecode`, `timecodeToFrames`, drop-frame
+SMPTE para 30000/1001 y 60000/1001). Ningún módulo define sus propios tipos de tiempo.
+
+```typescript
+// MediaSource: átomo de ingest (ref opaca — los detalles de FFmpeg viven en la frontera)
+export const mediaSourceSchema = z.strictObject({
+  schemaVersion: z.literal('abrxs.media-source.v1'),
+  id, kind: ['master','proxy','audio','image','video','generated_video','final_render'],
+  ref, hash?, hashAlgorithm?: ['sha256'], durationFrames?, timebase?,
+  width?, height?, codec?, audio? {present, channels?, sampleRate?},
+  proxyRef?, waveformRef?, filmstripRef?, extensions?
+}).refine(m => durationFrames>0 ⇒ timebase presente);
+
+// Piece: pieza individual derivada (clips verticales/horizontales, segmentos, batch)
+export const pieceSchema = z.strictObject({
+  schemaVersion: z.literal('abrxs.piece.v1'),
+  id, label, projectId,          // relación con el Production Graph
+  sourceRef,                     // id de MediaSource
+  sourceRange {startFrame, endFrame},  // out-exclusivo, frames de LA FUENTE
+  status: ['draft','cutting','ready','review','approved','exported','failed'],
+  transcriptRef?, outputRefs[], eventRefs[],  // eventos del grafo que cubre
+  provenance {createdFrom: ['manual_cut','auto_segment','visual_plan','import','generation','unknown'], createdAt, note?},
+  extensions?
+});
+
+// Job v2 extendido (opcional ⇒ compatible con jobs en disco)
+target: { kind: ['project','piece','event','asset','media_source'], ref }
+payload?: Record<string, unknown>
+// Regla: un job NUNCA resuelve "el primer evento compatible" cuando declara target.
+// Sin target, el job es sobre el proyecto completo (legado). El target entra en el
+// fingerprint de idempotencia del JobEngine.
+```
+
+Notas de migración v2.5: (1) los jobs `abraxas.job.v2` existentes siguen válidos sin
+`target`/`payload`; (2) `versions`: `ABRXS_VERSION` (`packages/contracts/src/version.ts`)
+es la única fuente de versión del producto — los manifests, Tauri, health, Doctor y MCP
+se alinean a ella y `tests/version.test.ts` verifica la consistencia; (3) el wire de
+`media.ts` (canter/dresser) DEBE usar estos contratos con frames canónicos, no segundos.

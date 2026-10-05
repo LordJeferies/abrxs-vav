@@ -1,6 +1,22 @@
 # AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
 
-> Última actualización: 2026-10-05 (v0.5.0)
+> Última actualización: 2026-10-05 (v0.5.1 — core hardening A en rama dev/0.5.1-media-core)
+
+## 0. NUEVO EN 0.5.1 (leer antes de wire media.ts)
+
+- Contratos v2.5 en @abraxas/contracts: **Piece** (abrxs.piece.v1), **MediaSource**
+  (abrxs.media-source.v1) y **Job target + payload** (target {kind,ref} opcional en
+  job.v2 — un job con target procesa EXACTAMENTE ese objetivo, nunca "el primer evento
+  compatible"). JSON Schemas: contracts/piece.v1 + media-source.v1.
+- Helpers de tiempo oficiales: packages/contracts/src/time.ts (framesToSeconds/
+  secondsToFrames/framesToTimecode/timecodeToFrames, timebase racional + drop-frame
+  SMPTE). USAR ESTOS, no segundos flotantes ni fps hardcodeado (extensions.source del
+  corte debe migrar a frames).
+- Versión: ABRXS_VERSION (packages/contracts/src/version.ts) = fuente única (0.5.1);
+  health/Doctor/tauri/manifests alineados; tests/version.test.ts + tests/mcp-parity.test.ts
+  impiden deriva (29 acciones ↔ 29 tools MCP; +vav_clients_create).
+- El wire de media.ts (canter/dresser) debe crear Pieces/MediaSources con estos
+  contratos y pasar target explícito en sus jobs. Ver docs/IMPLEMENTATION_STATUS.md §0.5.1.
 
 ## A. Modo COACH — el productor de video que dice el paso a paso
 
