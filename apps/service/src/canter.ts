@@ -139,7 +139,7 @@ export async function createPieceFromText(stores: CanterStores, input: {
     extensions: { alignment: { strategy: chosen.strategy, confidence: chosen.confidence, matchedText: chosen.matchedText,
       startSec: chosen.startSec, endSec: chosen.endSec } },
   });
-  return { piece: await stores.pieces.put(piece) };
+  return { piece: await stores.pieces.put(piece), status: decision.status };
 }
 
 /** Actualiza label/rango de una pieza (frames canónicos; validación contra el máster). */
