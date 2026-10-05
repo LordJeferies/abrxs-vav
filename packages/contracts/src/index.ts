@@ -179,3 +179,5 @@ export const resolvedConfigSchema = z.strictObject({
   clientId: z.string().nullable(), entries: z.array(resolvedEntrySchema)
 });
 export type ResolvedConfig = z.infer<typeof resolvedConfigSchema>;
+
+export * from './time';
