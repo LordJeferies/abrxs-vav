@@ -1,140 +1,76 @@
-# AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
-
-> Última actualización: 2026-10-05 (v0.6.0-M2a — M1 vertical REAL + M2 slice transcripción local, ambos en dev/vav-complete @ 9547112)
-
-## -3. BLOCKED ACTUAL (2026-10-05): VERIFICAR EMAIL EN GITHUB
-
-- git push / creación de PRs → 403 "At least one email address must be verified".
-- ACIÓN HUMANA: https://github.com/settings/emails → verificar → después:
-  git push -u origin feature/m2-canter-complete
-  gh pr create --base dev/vav-complete --head feature/m2-canter-complete (título M2 en CHANGELOG) → merge.
-- TRABAJO SEGURO EN LOCAL (feature/m2-canter-complete, suite 142/142 verde):
-  hardening de align/floors/media-streaming + UI Canter + doctor whisper + cierre docs.
-
-## -2. SIGUIENTE SESIÓN (M2 continúa)
-
-- HECHO: M1 vertical (ingest→C01→MP4→reopen) + M2 slice 1 (media.transcribe con
-  mlx_whisper word-level + cache por hash; paridad MCP 35↔35; 102/102 tests).
-- SIGUIENTE ACCIÓN: M2 slice 2 — crear PIEZAS POR TEXTO: buscar en transcript.words.json
-  (word-level) el rango de frames de una frase del usuario (alignment textual sobre
-  frames canónicos de la timebase del source) → canter.create_piece automático.
-  Después: UI de piezas (desktop), asignar eventRefs, Whisper para español/mixto.
-- ABIERTO: whisper.cpp SIN modelo ggml (solo mlx); diarización opcional PENDING;
-  UI Canter PENDING; Piece.eventRefs sin wire de UI.
-
-## -1. BRANCHING VIGENTE (0.6.0)
-
-- main = estable/release · dev/vav-complete = integración de todo el desarrollo ·
-  dev/0.5.1-media-core = integrado (0.5.1 cerrado; PR #1 y #2 mergeados) ·
-  milestones nuevos: feature/<milestone>-<nombre> → PR → dev/vav-complete.
-- Fuente de estado machine-readable para VAVStatus: docs/PROJECT_STATUS.json
-  (schemaVersion abrxs.project-status.v1; test tests/project-status.test.ts la protege).
-- DoD añade: PROJECT_STATUS.json actualizado + VAVStatus reflejando el estado.
-
-## 0. NUEVO EN 0.5.1 (leer antes de wire media.ts)
-
-- Contratos v2.5 en @abraxas/contracts: **Piece** (abrxs.piece.v1), **MediaSource**
-  (abrxs.media-source.v1) y **Job target + payload** (target {kind,ref} opcional en
-  job.v2 — un job con target procesa EXACTAMENTE ese objetivo, nunca "el primer evento
-  compatible"). JSON Schemas: contracts/piece.v1 + media-source.v1.
-- Helpers de tiempo oficiales: packages/contracts/src/time.ts (framesToSeconds/
-  secondsToFrames/framesToTimecode/timecodeToFrames, timebase racional + drop-frame
-  SMPTE). USAR ESTOS, no segundos flotantes ni fps hardcodeado (extensions.source del
-  corte debe migrar a frames).
-- Versión: ABRXS_VERSION (packages/contracts/src/version.ts) = fuente única (0.5.1);
-  health/Doctor/tauri/manifests alineados; tests/version.test.ts + tests/mcp-parity.test.ts
-  impiden deriva (29 acciones ↔ 29 tools MCP; +vav_clients_create).
-- El wire de media.ts (canter/dresser) debe crear Pieces/MediaSources con estos
-  contratos y pasar target explícito en sus jobs. Ver docs/IMPLEMENTATION_STATUS.md §0.5.1.
-
-## A. Modo COACH — el productor de video que dice el paso a paso
-
-**GET /api/coach/plan?projectId=…** (y tool MCP `vav_coach_plan`) compila el
-Production Graph en un **plan de montaje funcional**: pasos ordenados por timecode,
-cada uno con QUÉ hacer, CÓMO hacerlo y POR QUÉ — como un coach productor que te va
-guiando al terminar el video en CapCut o DaVinci.
-
-- Formato: JSON (`steps[]`) + TXT humano listo para pegar en el chat del editor.
-- Los pasos se derivan de los eventos reales del grafo (A-roll → B-roll → XR →
-  captions → SFX), con la explicación del motion canónico y el motivo editorial.
-- Es la semilla del NlePlan completo (FCPXML/EDL + kits) del paso 8: misma verdad,
-  primero texto, después archivos de intercambio.
-
-## B. Registries modulares — agregar tipos sin tocar código
-
-**GET /api/registries** (tool MCP `vav_registries_list`) expone los 5 catálogos
-versionados que alimentan Studio, Dresser, coach y Library:
-
-| REGISTRY | ENTRADAS v0.5.0 | CÓMO SE EXTIENDE |
-|---|---|---|
-| xr-families | 7 (canon R6) | agregar entrada con params; el Composer la implementa |
-| treatment-presets | 9 (halftone, film treatment, glass, weld&detach…) | agregar preset; Remotion/FFmpeg lo aplica |
-| sfx-families | 13 con variantes | agregar familia; Library mapea rol→archivo |
-| motion-presets | 10 (zoom ≤ 1.18) | agregar preset con nota de rango |
-| caption-presets | 4 | agregar preset; Client Profile lo asigna |
-| visual-packs | 3 | instalar pack; XR Studio lo lista |
-
-Regla: un tipo nuevo = una entrada de datos, jamás un `if` nuevo. Los módulos
-(subtítulos, cortes, XR…) también se usan **solos o juntos** — cada estación es
-independiente y escribe sobre el mismo grafo.
-
-## C. Roadmap de lo pedido y pendiente (delta sobre BUILD_PLAN_11_STEPS)
-
-| PEDIDO | ESTADO | DÓNDE CAE |
-|---|---|---|
-| Herramientas modulares (solo captions / solo cortes / todo) | ✅ diseño core + registries v0.5.0 | addendum §7 + apps/service/src/registries.ts |
-| App como MCP de edición (estilo DaVinci/AE MCP) | ✅ base real (18 tools vav_*) — crece por paso | mcp/server.mjs + docs/MCP_INTEGRATION.md |
-| Modo coach (paso a paso CapCut/DaVinci con explicaciones) | ✅ v0.5.0 (/api/coach/plan) | NlePlan completo en paso 8 |
-| PWA móvil con comandos precargados | 🚧 parte 1 hecha (sitio instalable) | paso 4: companion + cola vav_commands en Supabase (comandos hechos offline se ejecutan al abrir el desktop) |
-| Google Drive (cargar/descargar, buscador de archivos) | ⏳ paso 4-5 | docs/CLOUD_AND_PROVIDERS.md §2 (readonly-first, OAuth split) |
-| Asistente en la PWA que guía qué hacer para terminar un video | ✅ asistente local del sitio + coach en desktop | extender KB con los planes del coach |
-| Higgsfield (workflows async/poll, soul-styles, prompt alchemy) | ✅ capas 1-2 (Studio + providers) | docs/HIGGSFIELD_INTEGRATION.md — validar con key real del usuario |
-| Motion graphics estilo Remotion (imágenes en capas → animaciones) | ✅ packages/motion + /api/motion (rangos del editor) + job motion.render | docs/REMOTION_INTEGRATION.md — los 4 tutoriales codificados; bundle Remotion y Studio de props = paso 7 |
-| Client Profiles + resolución System→Client→Project + import TXT + AI Package | ✅ /api/clients + /api/config/resolve + contracts v2.4 | docs/DRESSER_RUNTIME.md §2-3 — UI wizard de clientes pendiente |
-| QA engine | ✅ estructural (/api/qa/analyze) | QA de píxeles con media real → paso 5 |
-| Editor de escenas del guion / cinema studio / short studio completos | ⏳ paso 5 (Dresser MVP) | el wizard de Visual Studio es su fundamento |
-
-## D. Cómo continuar el desarrollo (para cualquier IA)
-
-1. Lee `ROADMAP.txt` (orden de lectura, reglas, verificación) y este archivo.
-2. Estado exacto: `docs/IMPLEMENTATION_STATUS.md` (REAL/MOCK/PENDIENTE) y `CHANGELOG.md`.
-3. Antes de tocar código: `npm ci && npm run check && npm test && npm run build` (todo verde).
-4. Contrato de release: cada tarea = commit claro + actualización de estos 3 docs +
-   push. El sitio (repo `abrxsvavstatus`) refleja el estado EN VIVO desde aquí —
-   no hay que tocarlo para actualizar el progreso (lee ROADMAP.txt de este repo).
-5. Al terminar un paso: mover checkbox en ROADMAP.txt (`[x] PASO N`) y actualizar la
-   línea `SIGUIENTE ACCIÓN`.
-
-## E. Contexto para IA de SOPORTE técnico
-
-Si el usuario pide soporte, actúa como técnico de la app con este contexto:
-
-- **Síntomas frecuentes y solución**: sitio oficial → soporte
-  (https://lordjeferies.github.io/abrxsvavstatus/support.html) — mismas respuestas
-  que el asistente local del sitio (base: assets/knowledge.js del repo del sitio).
-- **Doctor**: la salud se consulta con vav_doctor/vav_status (MCP) o `npm run doctor`.
-  Diagnóstico de módulo caído: Error Boundary → "Copiar diagnóstico".
-- **Claves**: HF_API_KEY (KEY_ID:KEY_SECRET, de un solo uso) y NVIDIA_API_KEY (nvapi-)
-  van SOLO en el entorno del servicio; vav_providers_test devuelve HTTP+latencia real.
-  El provider Demo siempre está disponible sin claves.
-- **Datos**: todo en `.abraxas-data/` (local, escrituras atómicas con .bak). No está
-  en Git; no publicarla. Recuperación post-crash: Activity → Reanudar/Reiniciar.
-- **Puertos**: UI 1420 (dev) / 4317 (servicio). El MCP requiere el servicio corriendo.
-- Si algo no está en estos docs, márcalo como PENDIENTE — nunca inventar features.
-
-## F. SESIÓN SIGUIENTE — pipeline de medios en marcha (prioridad máxima)
-
-Estado al cierre 2026-10-05: `apps/service/src/media.ts` (10KB, REAL, sin wire)
-contiene TODO el motor FFmpeg: probe, makeProxy(540p), makeFilmstrip, makeWaveform,
-parseSrt/parseVtt/parsePlainTxt/parseTranscript/sliceSrt, keywords (stopwords es/en),
-cutPiece (re-encode frame-accurate), renderFinal (corte + B-rolls Ken Burns
-fullscreen zoompan + subtitles burn con force_style del cliente). LiquidGlass real
-aplicado en styles.css (.glass/.sidebar/.topbar/.hero con edge light + specular +
-thickness + modo Performance). PENDIENTE DE WIRE (sin tocar, repo limpio en 524f277):
-1) handlers canter.ingest/canter.export_piece/dresser.render_piece + rutas sync
-   /api/canter/{ingest,transcript_import,cut} y /api/dresser/{plan,render}
-   (patrón CAS igual que /api/studio/*); 2) UI Canter.tsx + Dresser.tsx + Clients
-   wizard (estilo VisualStudio.tsx); 3) catalog + MCP tools (+4); 4) tests de
-   parse SRT/keywords/plan; 5) E2E con video sintético (ffmpeg testsrc+sine).
-REGLA de esta sesión: verificar en disco tras CADA resultado sospechoso; la
-generación se degrada en turnos largos → sesiones cortas con commits pequeños.
+{
+  "schemaVersion": "abrxs.project-status.v1",
+  "product": "AbrxsVAV",
+  "stableBranch": "main",
+  "developmentBranch": "dev/vav-complete",
+  "currentVersion": "0.6.0",
+  "currentMilestone": "M2 — Canter completo (transcripción + alignment + UI) — REAL",
+  "currentTask": "M2 cerrado; siguiente M3: AssetStore + Client Profiles consolidados",
+  "nextAction": "M3: AssetStore canónico (assets source/generated/client con provenance) y consolidación Client Profiles",
+  "updatedAt": "2026-10-05T21:16:52.000Z",
+  "tests": {
+    "total": 142,
+    "passing": 142,
+    "failing": 0
+  },
+  "ci": "green (GitHub Actions: check + test + build)",
+  "doctor": "0.6.0 — Node/almacenamiento/media checks PASS (ffmpeg, ffprobe, temp, disk, decode mpeg4, H264)",
+  "modules": {
+    "core": "REAL",
+    "canter": "REAL",
+    "dresser": "PENDING",
+    "visualLab": "PARTIAL",
+    "review": "PENDING",
+    "delivery": "PENDING",
+    "workflowStudio": "PENDING",
+    "geometra": "PENDING",
+    "brandCreator": "PARTIAL",
+    "builder": "PENDING",
+    "canvases": "PENDING"
+  },
+  "milestones": [
+    {
+      "id": "M0",
+      "name": "0.5.1 core+media hardening",
+      "status": "REAL"
+    },
+    {
+      "id": "M1",
+      "name": "primer vertical real MASTER→C01→MP4",
+      "status": "REAL"
+    },
+    {
+      "id": "M2",
+      "name": "transcripción local word-level + Canter completo (UI incluida)",
+      "status": "REAL"
+    },
+    {
+      "id": "M3",
+      "name": "AssetStore + Client Profiles consolidados",
+      "status": "PENDING"
+    },
+    {
+      "id": "M4",
+      "name": "Dresser MVP real",
+      "status": "PENDING"
+    },
+    {
+      "id": "M5",
+      "name": "Batch 20",
+      "status": "PENDING"
+    }
+  ],
+  "blockers": [
+    {
+      "id": "github-email-verification",
+      "detail": "git push y creación de PRs bloqueados por GitHub (403 'email address must be verified'). ACCIÓN HUMANA: verificar email en https://github.com/settings/emails. Todo el trabajo M2 está commiteado LOCALMENTE en feature/m2-canter-complete — tras verificar: git push -u origin feature/m2-canter-complete; gh pr create --base dev/vav-complete; merge."
+    }
+  ],
+  "recentAchievements": [
+    "0.5.1: Piece/MediaSource/Job target, timebase racional con drop-frame, versión única ABRXS_VERSION, paridad MCP 29↔29",
+    "0.5.1: SHA streaming, filmstrip uniforme, paths hostiles, Doctor media con decode mpeg4 independiente de H264",
+    "0.6.0: vertical real MASTER→ingest→C01→MP4 E2E con reopen (proyecto+source+pieza+outputs persisten)",
+    "0.6.0-M2a: media.transcribe REAL — mlx_whisper word-level JSON canónico + SRT/TXT derivados + cache por hash; paridad MCP 35↔35",
+    "0.6.0-M2b: text→Piece (align exact/normalized/anchors/fuzzy con gating) + UI Canter completa + streaming Range seguro + Doctor whisper honesto; paridad MCP 40↔40"
+  ]
+}

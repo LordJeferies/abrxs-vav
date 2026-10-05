@@ -2,6 +2,16 @@
 
 > Última actualización: 2026-10-05 (v0.6.0-M2a — M1 vertical REAL + M2 slice transcripción local, ambos en dev/vav-complete @ 9547112)
 
+## -3. BLOCKED ACTUAL (2026-10-05): VERIFICAR EMAIL EN GITHUB
+
+- git push / creación de PRs → 403 "At least one email address must be verified"
+  (el REST Git Data API para CREAR contenido también está bloqueado; solo refs).
+- ACCIÓN HUMANA: https://github.com/settings/emails → verificar email → después:
+  git push -u origin feature/m2-canter-complete
+  gh pr create --base dev/vav-complete --head feature/m2-canter-complete → revisar → merge.
+- TRABAJO SEGURO EN LOCAL (feature/m2-canter-complete, suite verde):
+  hardening align/floor-ceil/media-streaming + UI Canter + doctor whisper + docs M2.
+
 ## -2. SIGUIENTE SESIÓN (M2 continúa)
 
 - HECHO: M1 vertical (ingest→C01→MP4→reopen) + M2 slice 1 (media.transcribe con
