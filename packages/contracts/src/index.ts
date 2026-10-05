@@ -227,6 +227,7 @@ export const mediaSourceSchema = z.strictObject({
   proxyRef: z.string().optional(),
   waveformRef: z.string().optional(),
   filmstripRef: z.string().optional(),
+  transcriptRef: z.string().optional(), // words.json canónico (M2: transcripción local)
   extensions: z.record(z.string(), z.unknown()).optional()
 }).refine(m => m.durationFrames==null||m.durationFrames===0||!!m.timebase, { message: 'durationFrames requiere timebase racional.', path: ['timebase'] });
 export type MediaSource = z.infer<typeof mediaSourceSchema>;

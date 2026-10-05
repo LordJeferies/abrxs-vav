@@ -4,13 +4,13 @@
   "stableBranch": "main",
   "developmentBranch": "dev/vav-complete",
   "currentVersion": "0.6.0",
-  "currentMilestone": "M1 — primer vertical real (MASTER → ingest → C01 → MP4)",
-  "currentTask": "M1 integrado en dev/vav-complete; siguiente: M2 transcripción local (whisper-cli/mlx_whisper)",
-  "nextAction": "M2: canter.transcribe (word-level JSON canónico vía whisper-cli/mlx, cache, import SRT/TXT) sobre el vertical M1",
-  "updatedAt": "2026-10-05T15:31:20.000Z",
+  "currentMilestone": "M2 — transcripción local word-level + Canter completo (slice 1: media.transcribe REAL)",
+  "currentTask": "M2 slice 1 integrado; siguiente: texto→rango de pieza (alignment) + UI de piezas + diarización opcional",
+  "nextAction": "M2 slice 2: crear piezas por TEXTO desde el transcript word-level (alignment textual sobre frames canónicos)",
+  "updatedAt": "2026-10-05T15:35:47.000Z",
   "tests": {
-    "total": 99,
-    "passing": 99,
+    "total": 102,
+    "passing": 102,
     "failing": 0
   },
   "ci": "green (GitHub Actions: check + test + build)",
@@ -42,7 +42,7 @@
     {
       "id": "M2",
       "name": "transcripción local word-level + Canter completo",
-      "status": "PENDING"
+      "status": "PARTIAL"
     },
     {
       "id": "M3",

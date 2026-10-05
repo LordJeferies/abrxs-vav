@@ -41,7 +41,8 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.media.list_sources', module:'canter', summary:'MediaSources persistidas con sus derivados (proxy/filmstrip/waveform refs).', method:'GET', path:'/api/media/sources', destructive:false, requiresOpenProject:false, since:'0.6.0' },
   { name:'vav.canter.list_pieces', module:'canter', summary:'Piezas (clips) persistidas, filtrables por projectId.', method:'GET', path:'/api/canter/pieces', destructive:false, requiresOpenProject:false, since:'0.6.0' },
   { name:'vav.canter.create_piece', module:'canter', summary:'Crea una Piece: rango por FRAMES (out-exclusivo) sobre un MediaSource ingestado.', method:'POST', path:'/api/canter/pieces', destructive:false, requiresOpenProject:true, since:'0.6.0' },
-  { name:'vav.canter.export_piece', module:'canter', summary:'Encola el corte real MP4 de una pieza (job canter.export_piece sobre target piece).', method:'POST', path:'/api/canter/pieces/:id/export', destructive:false, requiresOpenProject:true, since:'0.6.0' }
+  { name:'vav.canter.export_piece', module:'canter', summary:'Encola el corte real MP4 de una pieza (job canter.export_piece sobre target piece).', method:'POST', path:'/api/canter/pieces/:id/export', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.canter.transcribe', module:'canter', summary:'Transcribe un máster ingestado (whisper local word-level; cache por hash) → words.json + SRT/TXT.', method:'POST', path:'/api/canter/transcribe', destructive:false, requiresOpenProject:true, since:'0.6.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */

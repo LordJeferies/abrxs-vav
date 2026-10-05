@@ -64,6 +64,7 @@ const tools = [
   { name: 'vav_media_list_sources', description: 'Lista las MediaSources persistidas con sus derivados (proxy/filmstrip/waveform).', inputSchema: { type: 'object', additionalProperties: false } },
   { name: 'vav_canter_list_pieces', description: 'Lista las piezas (clips) persistidas; opcionalmente filtradas por projectId.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' } } } },
   { name: 'vav_canter_create_piece', description: 'Crea una Piece: rango por FRAMES out-exclusivo sobre un MediaSource ingestado.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, pieceId: { type: 'string' }, label: { type: 'string' }, mediaSourceId: { type: 'string' }, startFrame: { type: 'number' }, endFrame: { type: 'number' } }, required: ['projectId', 'revision', 'label', 'mediaSourceId', 'startFrame', 'endFrame'] } },
+  { name: 'vav_canter_transcribe', description: 'Transcribe un máster ingestado (whisper local word-level, cache por hash) → words.json + SRT/TXT derivados.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, mediaSourceId: { type: 'string' } }, required: ['projectId', 'revision', 'mediaSourceId'] } },
   { name: 'vav_canter_export_piece', description: 'Encola el corte real MP4 de una pieza (job canter.export_piece).', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, id: { type: 'string', description: 'pieceId, p.ej. C01' } }, required: ['projectId', 'revision', 'id'] } }
 ];
 
@@ -102,6 +103,7 @@ async function callTool(name, args) {
     case 'vav_media_list_sources': return api('vav.media.list_sources', args);
     case 'vav_canter_list_pieces': return api('vav.canter.list_pieces', args);
     case 'vav_canter_create_piece': return api('vav.canter.create_piece', { ...args, sourceRange: { startFrame: args.startFrame, endFrame: args.endFrame } });
+    case 'vav_canter_transcribe': return api('vav.canter.transcribe', args);
     case 'vav_canter_export_piece': return api('vav.canter.export_piece', args);
     case 'vav_smoke': {
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');

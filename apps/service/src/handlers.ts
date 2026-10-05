@@ -6,6 +6,7 @@ import type { JobHandler } from '@abraxas/core';
 import { providers } from './providers';
 import { compileComposition, type CompositionSpec } from '@abraxas/motion';
 import { probe, makeProxy, makeFilmstrip, makeWaveform, cutPiece } from './media';
+import { transcribeMaster } from './transcribe';
 import type { EntityRepository } from './entity-repository';
 import { exportOutputPath, type CanterStores } from './canter';
 
@@ -57,6 +58,23 @@ export const createJobHandlers = (deps: JobHandlerDeps = {}): Record<string, Job
       timebase:`${timebase.fpsNumerator}/${timebase.fpsDenominator}`,proxyRef:updated.proxyRef,
       filmstripRef:updated.filmstripRef,waveformRef:updated.waveformRef,
       note:'Derivados generados localmente; el máster nunca se cargó completo en RAM.'},null,2);
+  },
+  'media.transcribe':async(job,{signal,progress})=>{
+    const stores=requireStores(deps);
+    const sourceId=job.target?.kind==='media_source'?job.target.ref:null;
+    if(!sourceId)throw new Error('media.transcribe requiere target media_source explícito.');
+    const source=await stores.mediaSources.get(sourceId);
+    if(!source)throw new Error(`MediaSource ${sourceId} no existe.`);
+    if(!source.hash)throw new Error('El máster no está ingestado (sin hash). Ejecuta media.ingest antes de transcribir.');
+    await progress(0.1); signal.throwIfAborted();
+    const result=await transcribeMaster({sourceRef:source.ref,sourceHash:source.hash,
+      outDir:join(stores.dataDirectory,'transcriptions',source.id),signal});
+    await progress(0.9); signal.throwIfAborted();
+    await stores.mediaSources.put({...source,transcriptRef:result.wordsRef,
+      extensions:{...source.extensions,transcript:{srtRef:result.srtRef,txtRef:result.txtRef,
+        language:result.transcript.language,backend:result.transcript.backend,cached:result.cached}}});
+    return JSON.stringify({source:source.id,wordsRef:result.wordsRef,language:result.transcript.language,
+      segments:result.transcript.segments.length,cached:result.cached},null,2);
   },
   'canter.export_piece':async(job,{signal,progress})=>{
     const stores=requireStores(deps);

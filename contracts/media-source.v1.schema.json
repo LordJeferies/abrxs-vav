@@ -108,6 +108,9 @@
     "filmstripRef": {
       "type": "string"
     },
+    "transcriptRef": {
+      "type": "string"
+    },
     "extensions": {
       "type": "object",
       "propertyNames": {

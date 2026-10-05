@@ -1,5 +1,18 @@
 # Cambios
 
+## AbrxsVAV 0.6.0-M2a · 2026-10-05 (transcripción local word-level — slice 1)
+
+- **media.transcribe** (job con target `media_source`): transcripción LOCAL real con
+  **mlx_whisper** (Apple Silicon; modelo `mlx-community/whisper-large-v3-turbo` ya
+  cacheado) — word-level JSON CANÓNICO (`transcript.words.json`) + derivados SRT/TXT.
+  whisper.cpp soportado como backend alternativo (`ABRXS_WHISPER_CPP_MODEL`).
+- **Cache por hash**: mismo hash del máster + mismo backend/modelo → NO re-ejecuta
+  Whisper (verificado por test). Acción `vav.canter.transcribe` + tool MCP (paridad 35↔35).
+- `MediaSource.transcriptRef` (delta aditivo en contracts) + `extensions.transcript`
+  con idioma/backend/cached.
+- Tests: 99 → **102** (voz sintetizada con `say` → transcripción real en el Mac; gated:
+  sin backend/modelo, los tests se saltan honestos en CI sin MLX).
+
 ## AbrxsVAV 0.6.0 · 2026-10-05 (M1 — primer vertical real)
 
 - **Vertical MASTER → C01 → MP4 de punta a punta**: `media.ingest` (MediaSource +
