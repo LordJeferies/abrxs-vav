@@ -1,10 +1,10 @@
 {
   "name": "@abraxas/prompts",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
   "dependencies": {
-    "@abraxas/contracts": "0.2.0"
+    "@abraxas/contracts": "0.5.1"
   }
 }
