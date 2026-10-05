@@ -4,7 +4,7 @@
    nunca es requisito cross-platform. Importado por scripts/doctor.ts y
    testeable en tests/media.test.ts. */
 import { execFile } from 'node:child_process';
-import { statfs, mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { statfs, mkdtemp, writeFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -27,12 +27,20 @@ const versionOf = async (bin: string): Promise<MediaReport> => {
   return { check: bin, status: 'PASS', detail: `versión ${version}` };
 };
 
-/** Genera 1 s de video sintético (testsrc2 + audio sine) para probar decode/encode reales. */
-async function makeSyntheticFixture(dir: string, videoCodec: string): Promise<string> {
+/** Genera 1 s de video sintético (testsrc2 + audio sine) para probar decode/encode reales.
+    run() RESUELVE aunque ffmpeg salga con error, así que aquí se valida TODO antes de
+    devolver el path: exit code, existencia y tamaño > 0 — un encode fallido jamás puede
+    producir un PASS del doctor (verificado por test negativo en tests/media.test.ts). */
+export async function makeSyntheticFixture(dir: string, videoCodec: string): Promise<string> {
   const out = join(dir, `fixture_${videoCodec}.mp4`);
-  await run('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=30:duration=1',
+  const result = await run('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=30:duration=1',
     '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1',
     '-c:v', videoCodec, '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', out], 120_000);
+  if (result.code !== 0)
+    throw new Error(`ffmpeg falló con codec "${videoCodec}" (exit ${result.code}): ${(result.stderr || result.stdout || 'sin salida').slice(-300)}`);
+  const info = await stat(out).catch(() => null);
+  if (!info || info.size <= 0)
+    throw new Error(`ffmpeg no produjo salida válida con codec "${videoCodec}": ${out}`);
   return out;
 }
 

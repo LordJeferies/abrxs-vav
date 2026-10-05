@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash,randomBytes } from 'node:crypto';
 import { sha256File,planThumbnailTimestamps,probeDurationSec,makeFilmstrip,probe,cutPiece,renderFinal,escapeFilterPath } from '../apps/service/src/media';
-import { runMediaChecks } from '../scripts/doctor-media';
+import { runMediaChecks,makeSyntheticFixture } from '../scripts/doctor-media';
 
 const run=(cmd:string,args:string[]):Promise<{code:number;stdout:string;stderr:string}>=>new Promise(resolve=>{
   execFile(cmd,args,{timeout:120_000,maxBuffer:16*1024*1024},(err,stdout,stderr)=>{
@@ -134,6 +134,12 @@ describe('escapeFilterPath (filtergraph, dos niveles backslash según docs de ff
     const {stdout}=await run('ffprobe',['-v','quiet','-print_format','json','-show_streams',rendered]);
     const streams=(JSON.parse(stdout) as {streams?:Array<{codec_name?:string}>}).streams??[];
     expect(streams.some(st=>st.codec_name==='h264')).toBe(true);
+  });
+  it('makeSyntheticFixture con codec inexistente FALLA (un encode roto jamás produce PASS)',async()=>{
+    const dir=await mkdtemp(join(tmpdir(),'abrxs-doctor-neg-'));dirs.push(dir);
+    await expect(makeSyntheticFixture(dir,'codec_inexistente_123')).rejects.toThrow(/codec_inexistente_123/);
+    // Y el archivo prometido no existe tras el fallo (no hay artefacto mitad-cocido).
+    await expect(stat(join(dir,'fixture_codec_inexistente_123.mp4'))).rejects.toThrow();
   });
   it('Doctor media: ffmpeg/ffprobe/decode/H264/temp en PASS (o SKIP honesto)',async()=>{
     const reports=await runMediaChecks();
