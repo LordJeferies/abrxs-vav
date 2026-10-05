@@ -3,23 +3,30 @@
    waveform, corte frame-accurate, Ken Burns, captions quemadas, render final.
    Todo local. Errores humanos, timeouts por proceso (watchdog del JobEngine aparte). */
 import { execFile } from 'node:child_process';
-import { mkdtemp, mkdir, readFile, writeFile, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { mkdtemp, mkdir, rm, stat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, basename } from 'node:path';
 
 function run(cmd: string, args: string[], timeoutMs = 600_000): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
+    // execFile con argv: NUNCA shell → los paths con espacios/acentos/'()[] no interpolan nada.
     execFile(cmd, args, { timeout: timeoutMs, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
       if (err) reject(new Error(`${cmd} falló: ${(stderr || err.message).slice(-600)}`));
       else resolve({ stdout, stderr });
     });
   });
 }
-export const sha256File = async (p: string): Promise<string> => {
-  const buf = await readFile(p);
-  return createHash('sha256').update(buf).digest('hex');
-};
+/* ── Hash streaming: memoria ~constante (chunks de 1 MiB) aunque el máster pese GB. ── */
+export const sha256File = (p: string): Promise<string> => new Promise((resolve, reject) => {
+  const hash = createHash('sha256');
+  const stream = createReadStream(p, { highWaterMark: 1024 * 1024 });
+  stream.on('data', chunk => hash.update(chunk));
+  stream.on('error', (err: NodeJS.ErrnoException) =>
+    reject(new Error(`No se pudo leer ${p} para calcular el hash: ${err.code ?? ''} ${err.message}`.trimEnd())));
+  stream.on('end', () => resolve(hash.digest('hex')));
+});
 
 /* ── Probe ── */
 export interface MediaInfo {
@@ -49,11 +56,54 @@ export async function makeProxy(src: string, dir: string): Promise<string> {
   await run('ffmpeg', ['-y', '-i', src, '-vf', "scale=-2:min(540\\,ih)", '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', out]);
   return out;
 }
-export async function makeFilmstrip(src: string, dir: string, cols = 6, rows = 4): Promise<string> {
+
+/* ── Duración ligera (solo contenedor; NO hash-ea el máster para esto) ── */
+export async function probeDurationSec(file: string): Promise<number> {
+  await stat(file);
+  const { stdout } = await run('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', file], 30_000);
+  const j = JSON.parse(stdout) as { format?: { duration?: string } };
+  const duration = Number(j.format?.duration ?? 0);
+  if (!(duration > 0) || !Number.isFinite(duration)) throw new Error(`ffprobe no reportó una duración válida para ${file}.`);
+  return duration;
+}
+
+/** Timestamps (segundos) de N thumbnails repartidos por TODA la duración:
+    midpoint de cada segmento duration/N — determinista y uniforme por construcción. */
+export function planThumbnailTimestamps(durationSec: number, count: number): number[] {
+  if (!Number.isFinite(durationSec) || durationSec <= 0) throw new Error('Duración inválida para el filmstrip.');
+  if (!Number.isInteger(count) || count < 1) throw new Error('El filmstrip necesita al menos 1 thumbnail.');
+  return Array.from({ length: count }, (_, i) => +(durationSec * (i + 0.5) / count).toFixed(3));
+}
+
+/* ── Filmstrip: exactamente N thumbnails uniformes sobre TODA la duración.
+    Un seek por thumbnail (-ss antes de -i): decodifica ~1 frame por punto,
+    memoria ~constante, sin importar el fps (23.976…60). Sin mod(n,X). ── */
+export async function makeFilmstrip(src: string, dir: string, count = 24, cols = 6): Promise<string> {
+  const duration = await probeDurationSec(src);
+  const timestamps = planThumbnailTimestamps(duration, count);
+  const grid = Math.max(1, Math.floor(cols));
+  const rows = Math.ceil(count / grid);
   await mkdir(dir, { recursive: true });
-  const out = join(dir, 'filmstrip.jpg');
-  await run('ffmpeg', ['-y', '-i', src, '-vf', `select='not(mod(n,50))',scale=240:-1,tile=${cols}x${rows}`, '-frames:v', '1', '-q:v', '4', out], 120_000);
-  return out;
+  const framesDir = await mkdtemp(join(tmpdir(), 'abrxs-strip-'));
+  try {
+    for (const [i, t] of timestamps.entries()) {
+      const frame = join(framesDir, `f${String(i).padStart(3, '0')}.jpg`);
+      const args = (at: string): string[] => ['-y', '-ss', at, '-i', src, '-frames:v', '1', '-vf', 'scale=240:-2', '-q:v', '4', frame];
+      try {
+        await run('ffmpeg', args(t.toFixed(3)), 120_000);
+        await stat(frame);
+      } catch {
+        // Seek caído fuera del último frame (contenedores con duración redondeada): reintento al final real.
+        await run('ffmpeg', args(Math.max(0, duration - 0.05).toFixed(3)), 120_000);
+      }
+    }
+    const out = join(dir, 'filmstrip.jpg');
+    await run('ffmpeg', ['-y', '-framerate', '1', '-i', join(framesDir, 'f%03d.jpg'),
+      '-vf', `tile=${grid}x${rows}:color=black`, '-frames:v', '1', '-q:v', '4', out], 120_000);
+    return out;
+  } finally {
+    await rm(framesDir, { recursive: true, force: true });
+  }
 }
 export async function makeWaveform(src: string, dir: string): Promise<string | null> {
   await mkdir(dir, { recursive: true });
@@ -130,6 +180,19 @@ export async function cutPiece(src: string, inSec: number, outSec: number, outPa
   return outPath;
 }
 
+/** Escapa un path para un VALOR de opción de filtergraph (p.ej. subtitles=…).
+    Receta de dos niveles de la documentación oficial de FFmpeg ("Notes on
+    filtergraph escaping") — VERIFICADA con ffmpeg real en tests/media.test.ts:
+    nivel 1 (valor de opción) escapan \ ' :; nivel 2 (filtergraph completo)
+    vuelven a escapar los backslashes del nivel 1 y además , ; [ ].
+    Las variantes con comillas NO sobreviven el parser del grafo en ffmpeg 9. */
+export const escapeFilterPath = (path: string): string => {
+  const optionLevel = path.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/:/g, '\\:');
+  return optionLevel
+    .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/:/g, '\\:')
+    .replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+};
+
 /* ── Render final v1: corte + B-rolls Ken Burns (fullscreen) + captions quemadas ── */
 export interface BrollOverlay { imagePath: string; inSec: number; outSec: number; motion: 'ZOOM_IN' | 'ZOOM_OUT' | 'STATIC'; }
 export interface RenderFinalOpts {
@@ -157,7 +220,7 @@ export async function renderFinal(o: RenderFinalOpts): Promise<string> {
   if (o.srtPath) {
     const st = o.captionStyle ?? {};
     const force = `FontName=${st.fontName ?? 'Helvetica'},FontSize=${st.fontSize ?? 16},PrimaryColour=${st.primaryColor ?? '&H00FFFFFF'},OutlineColour=${st.outlineColour ?? '&H90000000'},Outline=1,Bold=1,MarginV=60`;
-    const sub = `subtitles='${o.srtPath.replace(/'/g, "\\'")}':force_style='${force}'`;
+    const sub = `subtitles=${escapeFilterPath(o.srtPath)}:force_style='${force}'`;
     vf = vf ? `${vf}${sub}[vout]` : `${sub}[vout]`;
     filters.push(vf);
   } else if (vf) {
