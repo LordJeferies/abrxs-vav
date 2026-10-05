@@ -180,6 +180,19 @@ export async function cutPiece(src: string, inSec: number, outSec: number, outPa
   return outPath;
 }
 
+/** Escapa un path para un VALOR de opción de filtergraph (p.ej. subtitles=…).
+    Receta de dos niveles de la documentación oficial de FFmpeg ("Notes on
+    filtergraph escaping") — VERIFICADA con ffmpeg real en tests/media.test.ts:
+    nivel 1 (valor de opción) escapan \ ' :; nivel 2 (filtergraph completo)
+    vuelven a escapar los backslashes del nivel 1 y además , ; [ ].
+    Las variantes con comillas NO sobreviven el parser del grafo en ffmpeg 9. */
+export const escapeFilterPath = (path: string): string => {
+  const optionLevel = path.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/:/g, '\\:');
+  return optionLevel
+    .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/:/g, '\\:')
+    .replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+};
+
 /* ── Render final v1: corte + B-rolls Ken Burns (fullscreen) + captions quemadas ── */
 export interface BrollOverlay { imagePath: string; inSec: number; outSec: number; motion: 'ZOOM_IN' | 'ZOOM_OUT' | 'STATIC'; }
 export interface RenderFinalOpts {
@@ -207,7 +220,7 @@ export async function renderFinal(o: RenderFinalOpts): Promise<string> {
   if (o.srtPath) {
     const st = o.captionStyle ?? {};
     const force = `FontName=${st.fontName ?? 'Helvetica'},FontSize=${st.fontSize ?? 16},PrimaryColour=${st.primaryColor ?? '&H00FFFFFF'},OutlineColour=${st.outlineColour ?? '&H90000000'},Outline=1,Bold=1,MarginV=60`;
-    const sub = `subtitles='${o.srtPath.replace(/'/g, "\\'")}':force_style='${force}'`;
+    const sub = `subtitles=${escapeFilterPath(o.srtPath)}:force_style='${force}'`;
     vf = vf ? `${vf}${sub}[vout]` : `${sub}[vout]`;
     filters.push(vf);
   } else if (vf) {
