@@ -42,7 +42,12 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.canter.list_pieces', module:'canter', summary:'Piezas (clips) persistidas, filtrables por projectId.', method:'GET', path:'/api/canter/pieces', destructive:false, requiresOpenProject:false, since:'0.6.0' },
   { name:'vav.canter.create_piece', module:'canter', summary:'Crea una Piece: rango por FRAMES (out-exclusivo) sobre un MediaSource ingestado.', method:'POST', path:'/api/canter/pieces', destructive:false, requiresOpenProject:true, since:'0.6.0' },
   { name:'vav.canter.export_piece', module:'canter', summary:'Encola el corte real MP4 de una pieza (job canter.export_piece sobre target piece).', method:'POST', path:'/api/canter/pieces/:id/export', destructive:false, requiresOpenProject:true, since:'0.6.0' },
-  { name:'vav.canter.transcribe', module:'canter', summary:'Transcribe un máster ingestado (whisper local word-level; cache por hash) → words.json + SRT/TXT.', method:'POST', path:'/api/canter/transcribe', destructive:false, requiresOpenProject:true, since:'0.6.0' }
+  { name:'vav.canter.transcribe', module:'canter', summary:'Transcribe un máster ingestado (whisper local word-level; cache por hash) → words.json + SRT/TXT.', method:'POST', path:'/api/canter/transcribe', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.canter.align_text', module:'canter', summary:'Alinea texto/anclas contra el transcript word-level → candidates[] con frames (no muta).', method:'POST', path:'/api/canter/align', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.canter.create_piece_from_text', module:'canter', summary:'Crea una Piece desde TEXTO alineado (con ambigüedad devuelve candidates para elegir).', method:'POST', path:'/api/canter/pieces/from_text', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.canter.get_transcript', module:'canter', summary:'Transcript word-level canónico de un MediaSource (segments + words).', method:'GET', path:'/api/canter/transcript/:id', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.canter.update_piece', module:'canter', summary:'Actualiza label/rango (frames) de una pieza.', method:'PUT', path:'/api/canter/pieces/:id', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.canter.delete_piece', module:'canter', summary:'Elimina una pieza (los MP4 exportados no se borran).', method:'POST', path:'/api/canter/pieces/:id/delete', destructive:true, requiresOpenProject:true, since:'0.6.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */

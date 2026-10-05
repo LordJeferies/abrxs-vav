@@ -35,6 +35,21 @@ export function secondsToFrames(seconds:number,timebase:RationalTimebase):number
   return Math.round(seconds*timebase.fpsNumerator/timebase.fpsDenominator);
 }
 
+/* Límites de CLIP (p.ej. palabra del transcript → Piece): el clip no debe cortar
+   una palabra por redondeo. start=COVER-floor (empieza en el frame que CONTIENE
+   el instante), end=COVER-ceil out-exclusivo (el primer frame DESPUÉS del
+   instante). Matemática racional entera — nunca fps float como identidad. */
+export function secondsToFrameFloor(seconds:number,timebase:RationalTimebase):number{
+  validateTimebase(timebase);
+  if(!Number.isFinite(seconds)||seconds<0) throw new Error('Los segundos deben ser un número finito no negativo.');
+  return Math.floor(seconds*timebase.fpsNumerator/timebase.fpsDenominator);
+}
+export function secondsToFrameCeil(seconds:number,timebase:RationalTimebase):number{
+  validateTimebase(timebase);
+  if(!Number.isFinite(seconds)||seconds<0) throw new Error('Los segundos deben ser un número finito no negativo.');
+  return Math.ceil(seconds*timebase.fpsNumerator/timebase.fpsDenominator);
+}
+
 /** SMPTE drop-frame solo existe para 30000/1001 (29.97) y 60000/1001 (59.94). */
 export function isDropFrameTimebase(timebase:RationalTimebase):boolean{
   validateTimebase(timebase);

@@ -244,7 +244,7 @@ export type FrameRange = z.infer<typeof frameRangeSchema>;
 
 /** Procedencia mínima: cómo nació la pieza y cuándo (AGENTS §8: todo asset con provenance). */
 export const pieceProvenanceSchema = z.strictObject({
-  createdFrom: z.enum(['manual_cut','auto_segment','visual_plan','import','generation','unknown']),
+  createdFrom: z.enum(['manual_cut','auto_segment','transcript_text_alignment','visual_plan','import','generation','unknown']),
   createdAt: z.string(),
   note: z.string().optional()
 });
