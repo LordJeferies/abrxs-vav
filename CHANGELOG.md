@@ -1,5 +1,36 @@
 # Cambios
 
+## AbrxsVAV 0.5.0 · 2026-10-05 (hito Visual Studio + modularidad + coach)
+
+- **Prompt Studio** (`packages/prompts`): catálogos de cine (7 cámaras, 6 lentes, 6 luz,
+  4 stocks, atmósferas, grades, composiciones) + motor de mejora con regla de
+  **sujeto intacto** (3 intensidades) + mapeo de motions canon R6 → lenguaje de cámara
+  + `buildHandoff()` → HandoffPackage para CUALQUIER IA. 5 tests propios.
+- **Providers de generación** (capa 2 Higgsfield): `HiggsfieldProvider` real
+  (POST→request_id→poll, soul-styles, Test Connection con HTTP+latencia),
+  `NvidiaProvider` (imágenes NIM), `DemoProvider` (pipeline completo sin claves).
+  Claves SOLO en el entorno del servicio (HF_API_KEY / NVIDIA_API_KEY).
+- **Visual Studio** en el desktop (Visual Lab): wizard con referencias (cámara, lente,
+  luz, stock, atmósfera, color, composición, motion), intensidades, mejorar prompt,
+  generar en la app (crea evento en el grafo con CAS y encola `media.generate`),
+  handoff .txt con descarga + copia, estado y Test Connection de providers.
+- **Registries modulares** (`/api/registries`): 5 catálogos versionados (7 familias XR,
+  13 SFX, 10 motions, 4 presets de captions, 3 packs) — extender tipos = agregar
+  entradas de datos, jamás código. Las herramientas se usan solas o juntas.
+- **Modo Coach** (`/api/coach/plan`, tool `vav_coach_plan`): compila el grafo en un
+  plan de montaje paso a paso (QUÉ/CÓMO/POR QUÉ por timecode) para terminar el video
+  en CapCut/DaVinci o por MCP de DaVinci — la semilla del NlePlan del paso 8.
+- **MCP crece a 18 tools**: +studio_enhance, +studio_generate, +studio_handoff,
+  +providers_status, +providers_test, +registries_list, +coach_plan.
+- **CONTINUITY.txt** nuevo: continuación de desarrollo para cualquier IA + contexto
+  de soporte técnico + roadmap de lo pedido (Drive, PWA con comandos precargados,
+  coach, modularidad).
+- E2E verificado por MCP y HTTP: enhance (sujeto intacto, 7 capas), generate demo
+  (evento en grafo → job completed con output del provider), handoff (expectedFilename),
+  providers status. 20/20 tests.
+- docs/HIGGSFIELD_INTEGRATION.md: la integración de 3 capas (studio/providers/UI)
+  y su roadmap (editor de escenas y cinema/short studio completos → paso 5).
+
 ## AbrxsVAV 0.4.0 · 2026-10-04 (paso 1 del plan de 11)
 
 - Contracts v2.3: delta aditivo en `@abraxas/contracts` — MaterializationStrategy,

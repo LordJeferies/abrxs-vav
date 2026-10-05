@@ -30,31 +30,29 @@
      del paso 1 completo · reescribir Canter 3.8.1 / Review 05 · segundas
      fuentes de verdad · código AGPL/PolyForm (ver docs/SOURCES_AND_REUSE.md).
 
-▸ ESTADO ACTUAL (2026-10-04) — PASO 0 COMPLETADO ✅
-  Repo creado desde abraxas-os-foundation (Foundation 0.2.0, núcleo REAL).
-  - Branding AbrxsVAV aplicado (scope interno @abraxas/* intacto).
-  - Documentación completa (13 docs): addendum maestro, spec por estación,
-    contratos v2.2/v2.3, plan de 11 pasos, MCP-first, Handoff UX, nubes y
-    providers (Supabase/Drive/NVIDIA), estabilidad, canon UI Apple, QA,
-    fuentes de copia, investigación Apple Design 2026.
-  - packages/ui con tokens.css + materials.css (design system dark-first).
-  - AGENTS.md ampliado (MCP-first, canon UI, handoff, prohibiciones).
-  - WORK_START_PROMPT.md = instrucciones exactas del PASO 1.
-  - Verificado: npm install + build (291 módulos) + 9 tests + check + doctor
-    en verde. Git inicializado; primer commit hecho.
+▸ ESTADO ACTUAL (2026-10-05) — PASOS 0–1 + HITO VISUAL STUDIO (0.5.0) ✅
+  Paso 0 y 1 completados (0.3.0/0.4.0). Hito 0.5.0 adelanta capacidad del paso 6:
+  - Prompt Studio (packages/prompts): sujeto intacto + capas de cine + handoff
+    para CUALQUIER IA. Providers: Higgsfield (async/poll real) + NVIDIA + Demo.
+  - Visual Studio en el desktop: wizard de cámara/luz con referencias, generar
+    integrado al grafo (evento + job), handoff .txt, Test Connection.
+  - Registries modulares: XR/SFX/motion/captions/packs extensibles por datos.
+  - Modo Coach: plan de montaje paso a paso (QUÉ/CÓMO/POR QUÉ) para CapCut/DaVinci.
+  - CONTINUITY.txt: continuación de dev + soporte técnico para cualquier IA.
+  - Sitio oficial PWA: https://lordjeferies.github.io/abrxsvavstatus/
 
 ▸ ROADMAP — 11 PASOS (detalle y criterios: docs/BUILD_PLAN_11_STEPS.md)
 
   [x] PASO 0 — Repo + branding + docs + tokens + CI verde
   [x] PASO 1 — CORE DESKTOP (0.4.0) ✅
-        Contracts v2.3 · ActionCatalog real (12 acciones /api/catalog) · servidor MCP
-        mcp/server.mjs (13 tools, vav_smoke E2E probado contra el servicio real:
-        proyecto → job completed → undo/redo) · watchdog del JobEngine · Error
-        Boundaries por módulo · corpus sintético de CI · 12/12 tests.
+        Contracts v2.3 · ActionCatalog real · servidor MCP (18 tools, vav_smoke
+        E2E probado) · watchdog · Error Boundaries · corpus sintético · 20/20 tests.
+  [x] HITO 0.5.0 — VISUAL STUDIO + MODULARIDAD + COACH ✅ (capacidad del paso 6
+        adelantada; detalle en CHANGELOG 0.5.0 y docs/HIGGSFIELD_INTEGRATION.md)
   [ ] PASO 2 — CANTER ADAPTER  ← ← ← SIGUIENTE ACCIÓN
         Adapter al motor 3.8.1 · Whisper word-level · MediaService por rangos ·
-        confirmación manual de límites. Instrucciones: docs/STATIONS_SPEC.md §3.
-        Salida: máster real de podcast → 10 piezas en el grafo, exportadas limpias.
+        confirmación manual de límites. Requiere máster real de podcast del usuario.
+        Salida: máster real → 10 piezas en el grafo, exportadas limpias.
   [ ] PASO 2 — Canter integrado (adapter al motor 3.8.1, MediaService por
         rangos). Salida: máster real → 10 piezas en el grafo, exportadas.
   [ ] PASO 3 — Vistas compartidas (Lista/Kanban/Mapa XYFlow).
