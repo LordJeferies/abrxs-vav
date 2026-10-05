@@ -1,6 +1,17 @@
 # AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
 
-> Última actualización: 2026-10-05 (v0.6.0 — M1 vertical real integrado en dev/vav-complete)
+> Última actualización: 2026-10-05 (v0.6.0-M2a — M1 vertical REAL + M2 slice transcripción local, ambos en dev/vav-complete @ ccbef2a)
+
+## -2. SIGUIENTE SESIÓN (M2 continúa)
+
+- HECHO: M1 vertical (ingest→C01→MP4→reopen) + M2 slice 1 (media.transcribe con
+  mlx_whisper word-level + cache por hash; paridad MCP 35↔35; 102/102 tests).
+- SIGUIENTE ACCIÓN: M2 slice 2 — crear PIEZAS POR TEXTO: buscar en transcript.words.json
+  (word-level) el rango de frames de una frase del usuario (alignment textual sobre
+  frames canónicos de la timebase del source) → canter.create_piece automático.
+  Después: UI de piezas (desktop), asignar eventRefs, Whisper para español/mixto.
+- ABIERTO: whisper.cpp SIN modelo ggml (solo mlx); diarización opcional PENDING;
+  UI Canter PENDING; Piece.eventRefs sin wire de UI.
 
 ## -1. BRANCHING VIGENTE (0.6.0)
 
