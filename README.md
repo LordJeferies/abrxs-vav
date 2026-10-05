@@ -19,6 +19,7 @@ REVIEW · DELIVERY · CLIENTS · LIBRARY · ACTIVITY
 
 | PREGUNTA | DOC |
 |---|---|
+| **TODOS los requisitos del proyecto con estado** (fuente definitiva para cualquier IA/humano) | `docs/REQUISITOS_MAESTROS.md` |
 | Qué es, qué NO es, principios, prohibiciones | `docs/00_ABRSX_VAV_ADDENDUM.md` |
 | Roadmap y estado en texto plano (para cualquier app/agente) | `ROADMAP.txt` |
 | Qué hace y cómo se construye CADA estación | `docs/STATIONS_SPEC.md` |
