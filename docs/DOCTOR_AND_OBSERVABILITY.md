@@ -32,8 +32,8 @@ Activity debe mostrar health, latency, job logs, retries, resource use y provide
 | ffmpeg / ffprobe | REAL | encontrados + versión (`ffmpeg -version`) |
 | directorio temp escribible | REAL | escritura/borrado real en tmpdir |
 | espacio libre en temp | REAL | `statfs(tmpdir)`; WARN si <5 GB |
-| decodificar video (sintético) | REAL | genera testsrc2 1 s y lo sondea con ffprobe |
-| encode H264 | REAL | encode real con fixture (libx264, fallback h264_videotoolbox) |
+| decodificar video (sintético) | REAL | genera testsrc2 1 s con codec NATIVO (mpeg4, sin librerías externas) y lo sondea con ffprobe — independiente de los encoders H264 |
+| encode H264 | REAL | encode real con fixture (libx264; fallback h264_videotoolbox; args específicos por encoder — nunca `-preset` fuera de libx264) |
 | VideoToolbox (macOS) | INFO | solo informativo — nunca requisito cross-platform |
 
 Sin ffmpeg/ffprobe instalados, los checks dependientes se marcan FAIL/SKIP con detalle

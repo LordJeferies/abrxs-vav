@@ -75,10 +75,12 @@
   `Client's subs [v2], ep:01.srt` sobre probe/filmstrip/cutPiece/renderFinal real.
 - **Doctor media** (`scripts/doctor-media.ts`, integrado en `npm run doctor`): ffmpeg y
   ffprobe (encontrados + versión), directorio temp escribible, espacio libre (WARN <5 GB),
-  decodificación real de video sintético (testsrc2→ffprobe), encode H264 con fixture real
-  (libx264, fallback h264_videotoolbox), VideoToolbox como INFO en macOS (nunca requisito
-  cross-platform). Sin FFmpeg → FAIL/SKIP honestos, nunca crash. PENDIENTE: fonts,
-  MLX/Whisper, providers AI, ComfyUI, DaVinci/CapCut (fuera de alcance de esta tarea).
+  decodificación real de video sintético (testsrc2→ffprobe con codec NATIVO mpeg4 —
+  desacoplado de los encoders H264: sin libx264 también debe PASS), encode H264 con
+  fixture real (libx264, fallback h264_videotoolbox; `encoderArgs()` con argumentos
+  específicos por encoder — nunca `-preset` fuera de libx264), VideoToolbox como INFO en
+  macOS (nunca requisito cross-platform). Sin FFmpeg → FAIL/SKIP honestos, nunca crash.
+  PENDIENTE: fonts, MLX/Whisper, providers AI, ComfyUI, DaVinci/CapCut (fuera de alcance).
 - **`npm run test:media`** (`tests/media.test.ts`): fixtures sintéticos con FFmpeg
   (testsrc2+sine), gated a la presencia de ffmpeg (CI sin ffmpeg corre solo las partes
   puras). Suite total en esta rama: 45/45.

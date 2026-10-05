@@ -27,6 +27,27 @@ const versionOf = async (bin: string): Promise<MediaReport> => {
   return { check: bin, status: 'PASS', detail: `versión ${version}` };
 };
 
+/** Codec del FIXTURE DE DECODE: mpeg4 es NATIVO de libavcodec (sin librerías
+    externas), presente en cualquier build razonable de ffmpeg y decodificable
+    en todas partes. El check de decodificación NO debe depender de libx264 ni
+    de ningún encoder H264: una instalación sin libx264 (p.ej. solo
+    h264_videotoolbox) decodifica bien y debe salir PASS. */
+export const DECODE_FIXTURE_CODEC = 'mpeg4';
+
+/** Argumentos de encode POR CODEC — NUNCA pasar opciones de libx264 (p.ej.
+    -preset) a otros encoders: h264_videotoolbox y los codecs nativos no las
+    comparten. Mantener mínimos y verificados con ffmpeg real. */
+export function encoderArgs(videoCodec: string): string[] {
+  switch (videoCodec) {
+    case 'libx264':
+      return ['-c:v', videoCodec, '-preset', 'ultrafast', '-pix_fmt', 'yuv420p'];
+    case 'h264_videotoolbox':
+      return ['-c:v', videoCodec, '-pix_fmt', 'yuv420p'];
+    default: // codecs nativos (mpeg4, ffv1…): sin opciones específicas
+      return ['-c:v', videoCodec, '-pix_fmt', 'yuv420p'];
+  }
+}
+
 /** Genera 1 s de video sintético (testsrc2 + audio sine) para probar decode/encode reales.
     run() RESUELVE aunque ffmpeg salga con error, así que aquí se valida TODO antes de
     devolver el path: exit code, existencia y tamaño > 0 — un encode fallido jamás puede
@@ -35,7 +56,7 @@ export async function makeSyntheticFixture(dir: string, videoCodec: string): Pro
   const out = join(dir, `fixture_${videoCodec}.mp4`);
   const result = await run('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=30:duration=1',
     '-f', 'lavfi', '-i', 'sine=frequency=440:duration=1',
-    '-c:v', videoCodec, '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-shortest', out], 120_000);
+    ...encoderArgs(videoCodec), '-c:a', 'aac', '-shortest', out], 120_000);
   if (result.code !== 0)
     throw new Error(`ffmpeg falló con codec "${videoCodec}" (exit ${result.code}): ${(result.stderr || result.stdout || 'sin salida').slice(-300)}`);
   const info = await stat(out).catch(() => null);
@@ -78,14 +99,15 @@ export async function runMediaChecks(): Promise<MediaReport[]> {
       reports.push({ check: 'espacio libre en temp', status: 'SKIP', detail: 'statfs no disponible en esta plataforma' });
     }
 
-    // Lectura de video real: sintetizar 1 s y sondearlo con ffprobe.
+    // Lectura de video real: sintetizar 1 s con codec NATIVO (mpeg4) y sondearlo
+    // con ffprobe. INDEPENDIENTE de los encoders H264: sin libx264 también debe PASS.
     try {
-      const fixture = await makeSyntheticFixture(temp, 'libx264');
+      const fixture = await makeSyntheticFixture(temp, DECODE_FIXTURE_CODEC);
       const { stdout } = await run('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', fixture]);
-      const info = JSON.parse(stdout) as { streams?: Array<{ codec_type?: string; width?: number }> };
+      const info = JSON.parse(stdout) as { streams?: Array<{ codec_type?: string; width?: number; codec_name?: string }> };
       const video = info.streams?.find(s => s.codec_type === 'video');
       reports.push(video?.width
-        ? { check: 'decodificar video (sintético)', status: 'PASS', detail: `testsrc2 320x240 leído por ffprobe` }
+        ? { check: 'decodificar video (sintético)', status: 'PASS', detail: `${DECODE_FIXTURE_CODEC} 320x240 leído por ffprobe (independiente de encoders H264)` }
         : { check: 'decodificar video (sintético)', status: 'FAIL', detail: 'ffprobe no vio pista de video' });
     } catch (error) {
       reports.push({ check: 'decodificar video (sintético)', status: 'FAIL', detail: error instanceof Error ? error.message.slice(-300) : 'falló el fixture' });

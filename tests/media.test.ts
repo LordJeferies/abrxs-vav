@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash,randomBytes } from 'node:crypto';
 import { sha256File,planThumbnailTimestamps,probeDurationSec,makeFilmstrip,probe,cutPiece,renderFinal,escapeFilterPath } from '../apps/service/src/media';
-import { runMediaChecks,makeSyntheticFixture } from '../scripts/doctor-media';
+import { runMediaChecks,makeSyntheticFixture,encoderArgs,DECODE_FIXTURE_CODEC } from '../scripts/doctor-media';
 
 const run=(cmd:string,args:string[]):Promise<{code:number;stdout:string;stderr:string}>=>new Promise(resolve=>{
   execFile(cmd,args,{timeout:120_000,maxBuffer:16*1024*1024},(err,stdout,stderr)=>{
@@ -134,6 +134,21 @@ describe('escapeFilterPath (filtergraph, dos niveles backslash según docs de ff
     const {stdout}=await run('ffprobe',['-v','quiet','-print_format','json','-show_streams',rendered]);
     const streams=(JSON.parse(stdout) as {streams?:Array<{codec_name?:string}>}).streams??[];
     expect(streams.some(st=>st.codec_name==='h264')).toBe(true);
+  });
+  it('encoderArgs: -preset SOLO para libx264 (nunca para h264_videotoolbox ni codecs nativos)',()=>{
+    expect(encoderArgs('libx264')).toEqual(expect.arrayContaining(['-c:v','libx264','-preset','ultrafast']));
+    expect(encoderArgs('h264_videotoolbox')).toEqual(expect.arrayContaining(['-c:v','h264_videotoolbox']));
+    expect(encoderArgs('h264_videotoolbox')).not.toContain('-preset');
+    expect(encoderArgs('mpeg4')).toEqual(expect.arrayContaining(['-c:v','mpeg4','-pix_fmt','yuv420p']));
+    expect(encoderArgs('mpeg4')).not.toContain('-preset');
+    expect(DECODE_FIXTURE_CODEC).toBe('mpeg4'); // nativo de libavcodec, sin libs externas
+  });
+  it('el fixture de decode (mpeg4) se genera y DECODIFICA completo sin libx264',async()=>{
+    const dir=await mkdtemp(join(tmpdir(),'abrxs-decode-'));dirs.push(dir);
+    const fixture=await makeSyntheticFixture(dir,DECODE_FIXTURE_CODEC);
+    // Decodificación TOTAL del archivo (no solo probe): sin libx264 en ninguna parte del pipeline.
+    const decode=await run('ffmpeg',['-v','error','-i',fixture,'-f','null','-']);
+    expect(decode.code).toBe(0);
   });
   it('makeSyntheticFixture con codec inexistente FALLA (un encode roto jamás produce PASS)',async()=>{
     const dir=await mkdtemp(join(tmpdir(),'abrxs-doctor-neg-'));dirs.push(dir);
