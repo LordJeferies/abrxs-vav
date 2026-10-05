@@ -6,9 +6,11 @@ import { compileComposition, type CompositionSpec } from '@abraxas/motion';
 
 export const handlers:Record<string,JobHandler>={
   'motion.render':async(job,{signal,progress})=>{
-    // Composiciones motion viven en los eventos del grafo (extensions.motionComposition)
-    const events=job.input.graph.events.filter(e=>e.extensions&&typeof e.extensions==='object'&&'motionComposition'in e.extensions);
-    if(!events.length)throw new Error('El proyecto no tiene eventos con motionComposition.');
+    // Composiciones motion viven en los eventos del grafo (extensions.motionComposition).
+    // v2.5: si el job declara target event, renderiza SOLO ese evento (nunca otros por conveniencia).
+    const all=job.input.graph.events.filter(e=>e.extensions&&typeof e.extensions==='object'&&'motionComposition'in e.extensions);
+    const events=job.target?.kind==='event'?all.filter(e=>e.id===job.target!.ref):all;
+    if(!events.length)throw new Error(job.target?.kind==='event'?`El evento objetivo ${job.target.ref} no tiene motionComposition.`:'El proyecto no tiene eventos con motionComposition.');
     const specs=events.map((e,i)=>{
       signal.throwIfAborted();
       const spec=compileComposition(e.extensions!.motionComposition as CompositionSpec);
@@ -19,9 +21,17 @@ export const handlers:Record<string,JobHandler>={
     return JSON.stringify({specVersion:'abrxs.motion-render.v1',compositions:specs,note:'RenderSpec Remotion-ready + comandos FFmpeg por capa. El render final entra con el bundle Remotion (paso 7).'},null,2);
   },
   'media.generate':async(job,{signal,progress})=>{
-    // La receta vive en el evento del grafo (core-integrado): extensions.recipe
-    const event=job.input.graph.events.find(e=>e.extensions&&typeof e.extensions==='object'&&'recipe'in e.extensions);
-    if(!event)throw new Error('El proyecto no tiene ningún evento con receta de generación (extensions.recipe).');
+    // La receta vive en el evento del grafo (core-integrado): extensions.recipe.
+    // v2.5: con target event se resuelve EXACTAMENTE ese evento; el fallback legado
+    // (primer evento con receta) solo aplica a jobs viejos sin target.
+    const events=job.input.graph.events;
+    const targetEventId=job.target?.kind==='event'?job.target.ref:null;
+    const event=targetEventId
+      ?events.find(e=>e.id===targetEventId)
+      :events.find(e=>e.extensions&&typeof e.extensions==='object'&&'recipe'in e.extensions);
+    if(!event)throw new Error(targetEventId
+      ?`El evento objetivo ${targetEventId} no existe en el grafo del job (target event).`
+      :'El proyecto no tiene ningún evento con receta de generación (extensions.recipe).');
     const recipe=event.extensions!.recipe as {strategy?:string;workflow?:string;prompt?:string;negative?:string;params?:Record<string,unknown>};
     const provider=providers[recipe.strategy||'demo']??providers.demo;
     await progress(0.1);
