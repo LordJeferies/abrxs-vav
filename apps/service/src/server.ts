@@ -5,10 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { ProjectStore, JobEngine, ConflictError, NotFoundError } from '@abraxas/core';
-import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema, jobTargetSchema, jobPayloadSchema, ABRXS_VERSION } from '@abraxas/contracts';
+import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema, jobTargetSchema, jobPayloadSchema, mediaSourceSchema, pieceSchema, ABRXS_VERSION } from '@abraxas/contracts';
 import { FileRepository } from './file-repository';
-import { handlers } from './handlers';
+import { EntityRepository } from './entity-repository';
+import { createJobHandlers } from './handlers';
 import { catalog } from './catalog';
+import { ingestMaster, createPiece, exportPiece, type CanterStores } from './canter';
 import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
@@ -25,7 +27,13 @@ const projectRepository=new FileRepository(join(dataDirectory,'projects'),projec
 const jobRepository=new FileRepository(join(dataDirectory,'jobs'),jobSchema);
 const store=new ProjectStore(projectRepository);
 const clientStore=new ClientStore(join(dataDirectory,'clients'));
-const engine=new JobEngine(jobRepository,handlers,value=>createHash('sha256').update(value).digest('hex'),{
+const canterStores:CanterStores={
+  mediaSources:new EntityRepository(join(dataDirectory,'entities','media-sources.json'),mediaSourceSchema,'abrxs.media-sources.v1'),
+  pieces:new EntityRepository(join(dataDirectory,'entities','pieces.json'),pieceSchema,'abrxs.pieces.v1'),
+  dataDirectory
+};
+const jobHandlers=createJobHandlers(canterStores);
+const engine=new JobEngine(jobRepository,jobHandlers,value=>createHash('sha256').update(value).digest('hex'),{
   defaultWatchdogMs:Number(process.env.ABRAXAS_JOB_WATCHDOG_MS||900_000) // 15 min por defecto
 });
 
@@ -56,8 +64,8 @@ const server=createServer(async(req,res)=>{
       const allowedOrigins=new Set([`http://127.0.0.1:${port}`,`http://localhost:${port}`,'http://127.0.0.1:1420','http://localhost:1420']);
       if(req.headers.origin&&!allowedOrigins.has(req.headers.origin)){send(res,403,{error:'Origen no autorizado.'});return;}
       if(req.method!=='GET'&&req.headers['x-abraxas-client']!=='local'){send(res,403,{error:'Petición local requerida.'});return;}
-      const segments=url.pathname.slice(5).split('/');const [resource,id,action]=segments;
-      if(req.method==='GET'&&resource==='health'){send(res,200,{status:'ready',version:ABRXS_VERSION,product:'AbrxsVAV',storage:'local-files',handlers:Object.keys(handlers),actions:catalog.length});return;}
+      const segments=url.pathname.slice(5).split('/');const [resource,id,action,extra]=segments;
+      if(req.method==='GET'&&resource==='health'){send(res,200,{status:'ready',version:ABRXS_VERSION,product:'AbrxsVAV',storage:'local-files',handlers:Object.keys(jobHandlers),actions:catalog.length});return;}
       if(req.method==='GET'&&resource==='catalog'){send(res,200,{product:'AbrxsVAV',version:ABRXS_VERSION,actions:catalog});return;}
       if(resource==='projects'){
         if(req.method==='GET'&&!id){send(res,200,await store.list());return;}
@@ -124,6 +132,16 @@ const server=createServer(async(req,res)=>{
         const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');
         send(res,200,analyzeGraph(await store.get(pid)));return;}
       if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
+      // ── 0.6.0 — M1: vertical real MASTER → MediaSource → Piece → MP4 ──
+      if(resource==='media'){
+        if(req.method==='POST'&&id==='ingest'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),path:z.string().min(1),label:z.string().max(160).optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de ingestar.');send(res,201,await ingestMaster(canterStores,engine,project,{path:input.path,label:input.label}));return;}
+        if(req.method==='GET'&&!id){send(res,200,{sources:await canterStores.mediaSources.list()});return;}
+      }
+      if(resource==='canter'){
+        if(req.method==='GET'&&id==='pieces'&&!action){const pid=url.searchParams.get('projectId');const all=await canterStores.pieces.list();send(res,200,{pieces:pid?all.filter(p=>p.projectId===pid):all});return;}
+        if(req.method==='POST'&&id==='pieces'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),pieceId:z.string().trim().min(1).max(120).optional(),label:z.string().trim().min(1).max(160),mediaSourceId:z.string().min(1),sourceRange:z.strictObject({startFrame:z.number().int().nonnegative(),endFrame:z.number().int().positive()}),eventRefs:z.array(z.string()).default([])}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear la pieza.');const piece=await createPiece(canterStores,{projectId:input.projectId,pieceId:input.pieceId,label:input.label,mediaSourceId:input.mediaSourceId,sourceRange:input.sourceRange,eventRefs:input.eventRefs});send(res,201,piece);return;}
+        if(req.method==='POST'&&id==='pieces'&&action&&extra==='export'){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de exportar.');send(res,201,await exportPiece(canterStores,engine,project,action));return;}
+      }
       send(res,404,{error:'Ruta no encontrada.'});return;
     }
     if(req.method!=='GET'){send(res,405,{error:'Método no permitido.'});return;}
@@ -137,7 +155,7 @@ const server=createServer(async(req,res)=>{
 async function main(){
   const release=await lock();
   try{
-    await projectRepository.init();await jobRepository.init();await clientStore.init();await store.list();await engine.recover();
+    await projectRepository.init();await jobRepository.init();await clientStore.init();await canterStores.mediaSources.init();await canterStores.pieces.init();await store.list();await engine.recover();
     server.on('error',async error=>{console.error(error.message);await engine.stop();await release();process.exit(1);});
     server.listen(port,'127.0.0.1',()=>console.log(`AbrxsVAV: http://127.0.0.1:${port} · datos ${dataDirectory}`));
     for(const signal of ['SIGINT','SIGTERM'] as const)process.once(signal,()=>{void engine.stop().then(()=>new Promise<void>(r=>server.close(()=>r()))).then(release).then(()=>process.exit(0));});
