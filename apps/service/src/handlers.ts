@@ -2,8 +2,22 @@ import { setTimeout as wait } from 'node:timers/promises';
 import { graphSchema } from '@abraxas/contracts';
 import type { JobHandler } from '@abraxas/core';
 import { providers } from './providers';
+import { compileComposition, type CompositionSpec } from '@abraxas/motion';
 
 export const handlers:Record<string,JobHandler>={
+  'motion.render':async(job,{signal,progress})=>{
+    // Composiciones motion viven en los eventos del grafo (extensions.motionComposition)
+    const events=job.input.graph.events.filter(e=>e.extensions&&typeof e.extensions==='object'&&'motionComposition'in e.extensions);
+    if(!events.length)throw new Error('El proyecto no tiene eventos con motionComposition.');
+    const specs=events.map((e,i)=>{
+      signal.throwIfAborted();
+      const spec=compileComposition(e.extensions!.motionComposition as CompositionSpec);
+      return {event:e.id,compositionId:spec.compositionId,layers:spec.layers.length,ffmpeg:spec.ffmpeg};
+    }).map((s,idx)=>{void idx;return s;});
+    await progress(0.6); signal.throwIfAborted();
+    await progress(0.9);
+    return JSON.stringify({specVersion:'abrxs.motion-render.v1',compositions:specs,note:'RenderSpec Remotion-ready + comandos FFmpeg por capa. El render final entra con el bundle Remotion (paso 7).'},null,2);
+  },
   'media.generate':async(job,{signal,progress})=>{
     // La receta vive en el evento del grafo (core-integrado): extensions.recipe
     const event=job.input.graph.events.find(e=>e.extensions&&typeof e.extensions==='object'&&'recipe'in e.extensions);

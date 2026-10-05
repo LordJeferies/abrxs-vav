@@ -47,8 +47,15 @@
   [x] PASO 1 — CORE DESKTOP (0.4.0) ✅
         Contracts v2.3 · ActionCatalog real · servidor MCP (18 tools, vav_smoke
         E2E probado) · watchdog · Error Boundaries · corpus sintético · 20/20 tests.
-  [x] HITO 0.5.0 — VISUAL STUDIO + MODULARIDAD + COACH ✅ (capacidad del paso 6
-        adelantada; detalle en CHANGELOG 0.5.0 y docs/HIGGSFIELD_INTEGRATION.md)
+  [x] HITO 0.5.0 — VISUAL STUDIO + MODULARIDAD + COACH + MOTION COMPOSER ✅
+        (capacidad de los pasos 5-6 adelantada; detalle en CHANGELOG 0.5.0,
+        docs/HIGGSFIELD_INTEGRATION.md y docs/REMOTION_INTEGRATION.md)
+        Prompt Studio (sujeto intacto + capas de cine + handoff para CUALQUIER IA) ·
+        Providers Higgsfield/NVIDIA/Demo (E2E real) · Visual Studio wizard ·
+        Registries modulares (XR/SFX/motion/captions/packs/tratamientos) ·
+        Modo Coach (paso a paso CapCut/DaVinci) · Motion Composer estilo Remotion
+        (capas con imágenes → keyframes deterministas zoom≤1.18 + FFmpeg zoompan,
+        por secciones del editor, E2E verificado; 26/26 tests; MCP a 21 tools).
   [ ] PASO 2 — CANTER ADAPTER  ← ← ← SIGUIENTE ACCIÓN
         Adapter al motor 3.8.1 · Whisper word-level · MediaService por rangos ·
         confirmación manual de límites. Requiere máster real de podcast del usuario.

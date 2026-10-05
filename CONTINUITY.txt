@@ -23,6 +23,7 @@ versionados que alimentan Studio, Dresser, coach y Library:
 | REGISTRY | ENTRADAS v0.5.0 | CÓMO SE EXTIENDE |
 |---|---|---|
 | xr-families | 7 (canon R6) | agregar entrada con params; el Composer la implementa |
+| treatment-presets | 9 (halftone, film treatment, glass, weld&detach…) | agregar preset; Remotion/FFmpeg lo aplica |
 | sfx-families | 13 con variantes | agregar familia; Library mapea rol→archivo |
 | motion-presets | 10 (zoom ≤ 1.18) | agregar preset con nota de rango |
 | caption-presets | 4 | agregar preset; Client Profile lo asigna |
@@ -43,6 +44,7 @@ independiente y escribe sobre el mismo grafo.
 | Google Drive (cargar/descargar, buscador de archivos) | ⏳ paso 4-5 | docs/CLOUD_AND_PROVIDERS.md §2 (readonly-first, OAuth split) |
 | Asistente en la PWA que guía qué hacer para terminar un video | ✅ asistente local del sitio + coach en desktop | extender KB con los planes del coach |
 | Higgsfield (workflows async/poll, soul-styles, prompt alchemy) | ✅ capas 1-2 (Studio + providers) | docs/HIGGSFIELD_INTEGRATION.md — validar con key real del usuario |
+| Motion graphics estilo Remotion (imágenes en capas → animaciones) | ✅ packages/motion + /api/motion (rangos del editor) + job motion.render | docs/REMOTION_INTEGRATION.md — los 4 tutoriales codificados; bundle Remotion y Studio de props = paso 7 |
 | Editor de escenas del guion / cinema studio / short studio completos | ⏳ paso 5 (Dresser MVP) | el wizard de Visual Studio es su fundamento |
 
 ## D. Cómo continuar el desarrollo (para cualquier IA)

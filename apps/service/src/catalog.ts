@@ -25,7 +25,10 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.providers.status', module:'visual-lab', summary:'Providers de generación registrados y su salud.', method:'GET', path:'/api/providers', destructive:false, requiresOpenProject:false, since:'0.5.0' },
   { name:'vav.providers.test', module:'visual-lab', summary:'Test Connection real (HTTP + latencia) contra un provider.', method:'POST', path:'/api/providers/test', destructive:false, requiresOpenProject:false, since:'0.5.0' },
   { name:'vav.registries.list', module:'core', summary:'Catálogos modulares versionados (XR, SFX, motion, captions, packs) — extender tipos = agregar entradas.', method:'GET', path:'/api/registries', destructive:false, requiresOpenProject:false, since:'0.5.0' },
-  { name:'vav.coach.plan', module:'delivery', summary:'Modo coach: plan de montaje paso a paso (qué/cómo/por qué por timecode) compilado del grafo para CapCut/DaVinci.', method:'GET', path:'/api/coach/plan?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' }
+  { name:'vav.coach.plan', module:'delivery', summary:'Modo coach: plan de montaje paso a paso (qué/cómo/por qué por timecode) compilado del grafo para CapCut/DaVinci.', method:'GET', path:'/api/coach/plan?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' },
+  { name:'vav.motion.compose', module:'visual-lab', summary:'Motion Composer: capas (imágenes/texto) → composición determinista estilo Remotion (keyframes canon, zoom ≤1.18) + comandos FFmpeg por capa.', method:'POST', path:'/api/motion', destructive:false, requiresOpenProject:true, since:'0.5.0' },
+  { name:'vav.motion.list', module:'visual-lab', summary:'Composiciones motion del proyecto (eventos kind=motion con su spec).', method:'GET', path:'/api/motion?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' },
+  { name:'vav.motion.render', module:'visual-lab', summary:'Re-renderiza una composición motion existente (job motion.render sobre la revisión actual).', method:'POST', path:'/api/jobs', destructive:false, requiresOpenProject:true, since:'0.5.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */

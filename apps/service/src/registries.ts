@@ -78,4 +78,20 @@ export const visualPacks: Registry = {
   ]
 };
 
-export const registries: Registry[] = [xrFamilies, sfxFamilies, motionPresets, captionPresets, visualPacks];
+/* ── Tratamientos visuales (codificados de los 4 tutoriales Remotion — docs/REMOTION_INTEGRATION.md) ── */
+export const treatmentPresets: Registry = {
+  id: 'treatment-presets', label: 'Presets de tratamiento visual', version: '1.0.0',
+  entries: [
+    { id: 'halftone.v1', label: 'Halftone B&W', note: 'Blanco y negro + patrón halftone — look revista/papel (Vox)', params: ['contrast', 'dotSize'] },
+    { id: 'film-treatment.v1', label: 'Film treatment', note: 'Sandwich: grain + grunge + scan lines 1.6px/16% + vignette + corner blur + gate weave', params: ['grain', 'scanlines', 'vignette'] },
+    { id: 'time-boil-12fps', label: 'Time boil 12fps', note: 'Posterize a 12 fps — stutter stop-motion', params: ['fps'] },
+    { id: 'screen-blend-smoke', label: 'Humo screen-blend', note: 'Screen blend + levantar grises + crush + feather', params: ['contrast', 'feather'] },
+    { id: 'glass-panel.v1', label: 'Glass panel (SaaS)', note: 'Frost 12-14px · edge light 16-17% · face 58% · corners 22/34px · slab 20px/3px', params: ['frost', 'edgeLight', 'face', 'corners', 'thickness'] },
+    { id: 'glass-light.v1', label: 'Glass light orbital', note: '2 elipses (core+wash 2x) screen-blend orbitando; core ~28px; refracción ~235px; color journey; reactividad 55%', params: ['coreBlur', 'reach', 'reactivity'] },
+    { id: 'weld-detach', label: 'Weld & detach', note: 'Capas soldadas como unidad hasta el frame N, luego se separan; crossfade B&W→color + blur burst 0→9px→0', params: ['weldFrame', 'blurBurst'] },
+    { id: 'floor-shadow', label: 'Sombra al piso', note: 'Duplicar imagen → proyectar, oscurecer, skew', params: ['skew', 'darken'] },
+    { id: 'lamp-swing', label: 'Lámpara + flicker', note: 'Hold keyframes con flicker; highlight de escritorio (sepia/sat/hue)', params: ['swing', 'flicker'] }
+  ]
+};
+
+export const registries: Registry[] = [xrFamilies, sfxFamilies, motionPresets, captionPresets, visualPacks, treatmentPresets];

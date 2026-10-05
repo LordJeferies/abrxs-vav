@@ -48,6 +48,9 @@ const tools = [
   { name: 'vav_providers_test', description: 'Test Connection real contra un provider (HTTP code + latencia).', inputSchema: { type: 'object', additionalProperties: false, properties: { provider: { type: 'string', enum: ['demo', 'higgsfield', 'nvidia'] } }, required: ['provider'] } },
   { name: 'vav_registries_list', description: 'Catálogos modulares versionados (familias XR, SFX, motions, presets de captions, packs) — extensible por datos.', inputSchema: { type: 'object', additionalProperties: false } },
   { name: 'vav_coach_plan', description: 'Modo coach: plan de montaje paso a paso (qué/cómo/por qué por timecode) compilado del grafo, para terminar el video en CapCut/DaVinci o por MCP.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, target: { type: 'string', enum: ['capcut', 'davinci', 'any'] } }, required: ['id'] } },
+  { name: 'vav_motion_compose', description: 'Motion Composer: capas (imágenes/texto con motion canon R6) → composición determinista estilo Remotion. Crea evento kind=motion en el grafo (CAS) y encola motion.render; devuelve RenderSpec + comandos FFmpeg por capa.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, startFrame: { type: 'number', description: 'rango del editor: frame de inicio de la sección (default 0)' }, composition: { type: 'object', description: '{id,fps,width,height,durationFrames,layers:[{id,assetUri,kind,startFrame,endFrame,motion,origin,scaleFrom,scaleTo,opacity,z,text,fontSize}]}' } }, required: ['projectId', 'revision', 'composition'] } },
+  { name: 'vav_motion_list', description: 'Lista las composiciones motion del proyecto (eventos kind=motion con su spec de capas).', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
+  { name: 'vav_motion_render', description: 'Re-renderiza composiciones motion existentes: encola job motion.render sobre la revisión actual del proyecto.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' } }, required: ['projectId', 'revision'] } },
   { name: 'vav_smoke', description: 'Prueba E2E del core: crea un proyecto temporal, valida, hace undo/redo y limpia. Útil para verificar la app por código.', inputSchema: { type: 'object', additionalProperties: false } }
 ];
 
@@ -72,6 +75,9 @@ async function callTool(name, args) {
     case 'vav_providers_test': return api('vav.providers.test', args);
     case 'vav_registries_list': return api('vav.registries.list');
     case 'vav_coach_plan': return api('vav.coach.plan', args);
+    case 'vav_motion_compose': return api('vav.motion.compose', args);
+    case 'vav_motion_list': return api('vav.motion.list', args);
+    case 'vav_motion_render': return api('vav.jobs.create', { projectId: args.projectId, revision: args.revision, kind: 'motion.render' });
     case 'vav_smoke': {
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
       const project = await api('vav.projects.create', { name: `SMOKE_${stamp}`, timebase: { fpsNumerator: 30000, fpsDenominator: 1001 } }, { internal: true });

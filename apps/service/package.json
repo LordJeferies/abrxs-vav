@@ -11,6 +11,7 @@
     "@abraxas/core": "0.2.0",
     "@abraxas/contracts": "0.2.0",
     "zod": "^4.4.3",
-    "@abraxas/prompts": "0.5.0"
+    "@abraxas/prompts": "0.5.0",
+    "@abraxas/motion": "0.5.0"
   }
 }

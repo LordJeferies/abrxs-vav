@@ -30,6 +30,21 @@
   providers status. 20/20 tests.
 - docs/HIGGSFIELD_INTEGRATION.md: la integración de 3 capas (studio/providers/UI)
   y su roadmap (editor de escenas y cinema/short studio completos → paso 5).
+- **Motion Composer** (`packages/motion`): motion graphics deterministas estilo
+  Remotion — capas (imágenes/texto/video) sobre el timeline → keyframes canon
+  (10 presets R6, ease-in-out único, zoom ≤ 1.18) → RenderSpec JSON Remotion-ready
+  + comandos FFmpeg zoompan por capa (preview inmediato). Ruta /api/motion con
+  soporte de RANGOS (componer motion para una sección del editor), job
+  motion.render, GET /api/motion (listar composiciones). 6 tests propios.
+- **docs/REMOTION_INTEGRATION.md**: los 4 tutoriales Remotion codificados a la
+  arquitectura — VO=timeline (beats de Canter → 1 composición por línea),
+  sistema visual bloqueado (Client Profile + packs), 3 capas canónicas
+  (bg/mid/fg), spring+interpolate+wobble, halftone, film treatment sandwich,
+  weld&detach, receta glass SaaS (frost 12-14px, edge 16%, face 58%),
+  prop controls, escena-por-escena antes de fusionar al master.
+- Registry `treatment-presets` (9 tratamientos de los videos: halftone, film
+  treatment, time-boil 12fps, screen-blend smoke, glass panel/light, weld&detach,
+  floor shadow, lamp swing). MCP a 21 tools (+motion_compose/list/render).
 
 ## AbrxsVAV 0.4.0 · 2026-10-04 (paso 1 del plan de 11)
 

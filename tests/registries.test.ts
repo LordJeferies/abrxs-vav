@@ -10,7 +10,7 @@ const corpus=projectSchema.parse(JSON.parse(await readFile(join(import.meta.dirn
 describe('Registries modulares',()=>{
  it('expone los 5 catálogos versionados del canon',()=>{
   const ids=registries.map(r=>r.id);
-  expect(ids).toEqual(['xr-families','sfx-families','motion-presets','caption-presets','visual-packs']);
+  expect(ids).toEqual(['xr-families','sfx-families','motion-presets','caption-presets','visual-packs','treatment-presets']);
   expect(registries.find(r=>r.id==='xr-families')!.entries).toHaveLength(7);
   expect(registries.find(r=>r.id==='sfx-families')!.entries).toHaveLength(13);
   expect(registries.find(r=>r.id==='motion-presets')!.entries).toHaveLength(10);

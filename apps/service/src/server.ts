@@ -12,6 +12,7 @@ import { catalog } from './catalog';
 import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
+import { compileComposition } from '@abraxas/motion';
 import { buildCoachPlan } from './coach';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
@@ -64,7 +65,7 @@ const server=createServer(async(req,res)=>{
       }
       if(resource==='jobs'){
         if(req.method==='GET'&&!id){send(res,200,await engine.list());return;}
-        if(req.method==='POST'&&!id){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),kind:z.enum(['project.validate','project.edit-plan','media.generate'])}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear el trabajo.');send(res,201,await engine.enqueue(project,input.kind));return;}
+        if(req.method==='POST'&&!id){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),kind:z.enum(['project.validate','project.edit-plan','media.generate','motion.render'])}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear el trabajo.');send(res,201,await engine.enqueue(project,input.kind));return;}
         if(req.method==='POST'&&id&&action==='cancel'){send(res,200,await engine.cancel(id));return;}
         if(req.method==='POST'&&id&&action==='retry'){send(res,200,await engine.retry(id));return;}
       }
@@ -80,6 +81,18 @@ const server=createServer(async(req,res)=>{
           const content={...project.content,graph:{...project.content.graph,events:[...project.content.graph.events.filter(e=>e.id!==eventId),event]}};
           const edited=await store.edit(input.projectId,input.revision,`Visual Studio · ${result.subject.slice(0,60)}`,content);
           const job=await engine.enqueue(edited,'media.generate');send(res,201,{project:edited,job,recipe:{prompt:result.prompt,negative:result.negative,appliedLayers:result.appliedLayers,eventId}});return;}
+      }
+      if(resource==='motion'){
+        // Motion Composer: capas (imágenes/texto) → composición determinista estilo Remotion
+        if(req.method==='GET'&&!id){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const project=await store.get(pid);send(res,200,project.content.graph.events.filter(e=>e.kind==='motion'&&e.extensions&&'motionComposition'in e.extensions).map(e=>({event:e.id,label:e.label,composition:e.extensions!.motionComposition})));return;}
+        if(req.method==='POST'&&!id){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),label:z.string().default('Motion Composer'),startFrame:z.number().int().nonnegative().default(0),composition:z.record(z.string(),z.unknown())}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de componer.');
+          const renderSpec=compileComposition(input.composition as never);
+          const eventId=`MO${String(project.content.graph.events.filter(e=>e.kind==='motion').length+1).padStart(2,'0')}_motion`;
+          const event={id:eventId,label:input.label,kind:'motion' as const,startFrame:input.startFrame,endFrame:input.startFrame+renderSpec.durationFrames,status:'planned' as const,extensions:{purpose:`Motion Composer: ${renderSpec.layers.length} capas deterministas`,motionComposition:input.composition}};
+          const content={...project.content,graph:{...project.content.graph,events:[...project.content.graph.events.filter(e=>e.id!==eventId),event]}};
+          const edited=await store.edit(input.projectId,input.revision,`Motion Composer · ${input.composition.id as string}`,content);
+          const job=await engine.enqueue(edited,'motion.render');
+          send(res,201,{project:edited,job,eventId,renderSpec});return;}
       }
       if(resource==='providers'){
         if(req.method==='GET'&&!id){send(res,200,{providers:providerStatus()});return;}
