@@ -76,3 +76,20 @@ Si el usuario pide soporte, actúa como técnico de la app con este contexto:
   en Git; no publicarla. Recuperación post-crash: Activity → Reanudar/Reiniciar.
 - **Puertos**: UI 1420 (dev) / 4317 (servicio). El MCP requiere el servicio corriendo.
 - Si algo no está en estos docs, márcalo como PENDIENTE — nunca inventar features.
+
+## F. SESIÓN SIGUIENTE — pipeline de medios en marcha (prioridad máxima)
+
+Estado al cierre 2026-10-05: `apps/service/src/media.ts` (10KB, REAL, sin wire)
+contiene TODO el motor FFmpeg: probe, makeProxy(540p), makeFilmstrip, makeWaveform,
+parseSrt/parseVtt/parsePlainTxt/parseTranscript/sliceSrt, keywords (stopwords es/en),
+cutPiece (re-encode frame-accurate), renderFinal (corte + B-rolls Ken Burns
+fullscreen zoompan + subtitles burn con force_style del cliente). LiquidGlass real
+aplicado en styles.css (.glass/.sidebar/.topbar/.hero con edge light + specular +
+thickness + modo Performance). PENDIENTE DE WIRE (sin tocar, repo limpio en 524f277):
+1) handlers canter.ingest/canter.export_piece/dresser.render_piece + rutas sync
+   /api/canter/{ingest,transcript_import,cut} y /api/dresser/{plan,render}
+   (patrón CAS igual que /api/studio/*); 2) UI Canter.tsx + Dresser.tsx + Clients
+   wizard (estilo VisualStudio.tsx); 3) catalog + MCP tools (+4); 4) tests de
+   parse SRT/keywords/plan; 5) E2E con video sintético (ffmpeg testsrc+sine).
+REGLA de esta sesión: verificar en disco tras CADA resultado sospechoso; la
+generación se degrada en turnos largos → sesiones cortas con commits pequeños.
