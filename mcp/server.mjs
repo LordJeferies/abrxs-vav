@@ -8,6 +8,7 @@ import readline from 'node:readline';
 const BASE = process.env.VAV_SERVICE_URL || 'http://127.0.0.1:4317';
 const READ_ONLY = /^true$/i.test(process.env.VAV_MCP_READ_ONLY || '');
 const HEADERS = { 'Content-Type': 'application/json', 'X-Abraxas-Client': 'local' };
+let serverVersion = null; // caché de /api/health → fuente única de versión (packages/contracts/src/version.ts)
 
 async function api(action, params = {}, { internal = false } = {}) {
   const catalogRes = await fetch(`${BASE}/api/catalog`).then(r => r.json()).catch(() => null);
@@ -38,7 +39,7 @@ const tools = [
   { name: 'vav_undo_project', description: 'Deshace la última operación del proyecto.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, revision: { type: 'number' } }, required: ['id', 'revision'] } },
   { name: 'vav_redo_project', description: 'Rehace la siguiente operación del proyecto.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, revision: { type: 'number' } }, required: ['id', 'revision'] } },
   { name: 'vav_list_jobs', description: 'Lista los trabajos con estado y progreso.', inputSchema: { type: 'object', additionalProperties: false } },
-  { name: 'vav_create_job', description: 'Encola un trabajo (project.validate | project.edit-plan) sobre un proyecto con su revisión actual.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, kind: { type: 'string', enum: ['project.validate', 'project.edit-plan'] } }, required: ['projectId', 'revision', 'kind'] } },
+  { name: 'vav_create_job', description: 'Encola un trabajo sobre un proyecto con su revisión actual: project.validate | project.edit-plan | media.generate | motion.render. Con target explícito ({kind,ref}) el job procesa exactamente ese objetivo (nunca "el primer evento compatible").', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, kind: { type: 'string', enum: ['project.validate', 'project.edit-plan', 'media.generate', 'motion.render'] }, target: { type: 'object', description: '{kind: project|piece|event|asset|media_source, ref}' }, payload: { type: 'object', description: 'datos libres del trabajo' } }, required: ['projectId', 'revision', 'kind'] } },
   { name: 'vav_cancel_job', description: 'Cancela un trabajo activo.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'vav_retry_job', description: 'Reintenta un trabajo fallido o cancelado.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'vav_studio_enhance', description: 'Prompt Studio: añade capas de cine (cámara/lente/luz/stock/atmósfera/grade) al sujeto SIN tocarlo. Intensidad 1-3.', inputSchema: { type: 'object', additionalProperties: false, properties: { subject: { type: 'string' }, intensity: { type: 'number', enum: [1, 2, 3] }, options: { type: 'object', additionalProperties: { type: 'string' }, description: 'camera/lens/light/stock/atmosphere/grade/composition/motion' } }, required: ['subject', 'intensity'] } },
@@ -52,6 +53,7 @@ const tools = [
   { name: 'vav_motion_list', description: 'Lista las composiciones motion del proyecto (eventos kind=motion con su spec de capas).', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'vav_motion_render', description: 'Re-renderiza composiciones motion existentes: encola job motion.render sobre la revisión actual del proyecto.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' } }, required: ['projectId', 'revision'] } },
   { name: 'vav_clients_list', description: 'Lista los perfiles de cliente (marca, fuentes, reglas, prioridades de fuente).', inputSchema: { type: 'object', additionalProperties: false } },
+  { name: 'vav_clients_create', description: 'Crea un perfil de cliente (opcionalmente importa su TXT con hechos+confianza).', inputSchema: { type: 'object', additionalProperties: false, properties: { name: { type: 'string' }, rawTxt: { type: 'string' } }, required: ['name'] } },
   { name: 'vav_clients_get', description: 'Lee un perfil de cliente completo.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'vav_clients_import_txt', description: 'Parsea un TXT desordenado del cliente → hechos con confianza + diff SIN aplicar (aplica con vav_clients_ai_import apply:true tras revisar).', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, rawTxt: { type: 'string' } }, required: ['id', 'rawTxt'] } },
   { name: 'vav_clients_ai_import', description: 'Importa respuesta de IA en formato ABRXS CLIENT PROFILE v1 con diff; apply:true aplica.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, responseTxt: { type: 'string' }, apply: { type: 'boolean' } }, required: ['id', 'responseTxt'] } },
@@ -85,6 +87,7 @@ async function callTool(name, args) {
     case 'vav_motion_list': return api('vav.motion.list', args);
     case 'vav_motion_render': return api('vav.jobs.create', { projectId: args.projectId, revision: args.revision, kind: 'motion.render' });
     case 'vav_clients_list': return api('vav.clients.list');
+    case 'vav_clients_create': return api('vav.clients.create', args);
     case 'vav_clients_get': return api('vav.clients.get', args);
     case 'vav_clients_import_txt': return api('vav.clients.import_txt', args);
     case 'vav_clients_ai_import': return api('vav.clients.ai_import', args);
@@ -115,7 +118,13 @@ rl.on('line', line => {
   let msg; try { msg = JSON.parse(line); } catch { return; }
   const { id, method, params } = msg;
   (async () => {
-    if (method === 'initialize') return { protocolVersion: params?.protocolVersion || '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'abrxs-vav-mcp', version: '0.4.0' } };
+    if (method === 'initialize') {
+      // La versión del servidor MCP se hereda del servicio (fuente única); nunca hardcodeada.
+      if (serverVersion === null) {
+        serverVersion = await fetch(`${BASE}/api/health`).then(r => r.json()).then(h => h.version ?? 'unknown').catch(() => 'unknown');
+      }
+      return { protocolVersion: params?.protocolVersion || '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'abrxs-vav-mcp', version: serverVersion } };
+    }
     if (method === 'notifications/initialized' || method?.startsWith('notifications/')) return null;
     if (method === 'tools/list') return { tools };
     if (method === 'tools/call') {
