@@ -90,6 +90,43 @@ describe('Job target + payload (v2.5, compatible con jobs v2 existentes)',()=>{
     const job=await engine.enqueue(project,'project.validate');
     expect(job.target).toEqual({kind:'project',ref:project.id});
   });
+  it('enqueue sin options conserva el fingerprint LEGACY exacto ({kind,revision,content})',async()=>{
+    const dir=await mkdtemp(join(tmpdir(),'abrxs-mediacore-'));directories.push(dir);
+    const repo=new FileRepository(join(dir,'projects'),(await import('@abraxas/contracts')).projectSchema);await repo.init();
+    const jobs=new FileRepository(join(dir,'jobs'),jobSchema);await jobs.init();
+    const store=new ProjectStore(repo);const project=await store.create('Target Test',TB);
+    const engine=new JobEngine(jobs,{'project.validate':handlers['project.validate']},value=>createHash('sha256').update(value).digest('hex'));
+    engines.push(engine);
+    const job=await engine.enqueue(project,'project.validate');
+    const legacyExpected=createHash('sha256').update(JSON.stringify({kind:'project.validate',revision:project.revision,content:project.content})).digest('hex');
+    expect(job.inputFingerprint).toBe(legacyExpected);
+  });
+  it('un enqueue legado deduplica contra un job persistido antes de 0.5.1 (mismo fingerprint histórico)',async()=>{
+    const dir=await mkdtemp(join(tmpdir(),'abrxs-mediacore-'));directories.push(dir);
+    const repo=new FileRepository(join(dir,'projects'),(await import('@abraxas/contracts')).projectSchema);await repo.init();
+    const jobs=new FileRepository(join(dir,'jobs'),jobSchema);await jobs.init();
+    const store=new ProjectStore(repo);const project=await store.create('Target Test',TB);
+    const engine=new JobEngine(jobs,{'project.validate':handlers['project.validate']},value=>createHash('sha256').update(value).digest('hex'));
+    engines.push(engine);
+    const job=await engine.enqueue(project,'project.validate');
+    // Simula un job creado por la versión anterior: mismo fingerprint legacy, sin target/payload.
+    const legacyJob=jobSchema.parse({...job,id:crypto.randomUUID(),inputFingerprint:createHash('sha256').update(JSON.stringify({kind:'project.validate',revision:project.revision,content:project.content})).digest('hex'),target:undefined,payload:undefined});
+    await jobs.put(legacyJob.id,legacyJob);
+    const reEnqueued=await engine.enqueue(project,'project.validate');
+    expect(reEnqueued.id).toBe(legacyJob.id); // reconocido: NO se re-ejecuta
+  });
+  it('target explícito genera fingerprint distinto al legacy (nunca deduplican entre sí)',async()=>{
+    const dir=await mkdtemp(join(tmpdir(),'abrxs-mediacore-'));directories.push(dir);
+    const repo=new FileRepository(join(dir,'projects'),(await import('@abraxas/contracts')).projectSchema);await repo.init();
+    const jobs=new FileRepository(join(dir,'jobs'),jobSchema);await jobs.init();
+    const store=new ProjectStore(repo);const project=await store.create('Target Test',TB);
+    const engine=new JobEngine(jobs,{'project.validate':handlers['project.validate']},value=>createHash('sha256').update(value).digest('hex'));
+    engines.push(engine);
+    const legacy=await engine.enqueue(project,'project.validate');
+    const withTarget=await engine.enqueue(project,'project.validate',{target:{kind:'event',ref:'A01'}});
+    expect(withTarget.inputFingerprint).not.toBe(legacy.inputFingerprint);
+    expect(withTarget.id).not.toBe(legacy.id);
+  });
   it('enqueue con target event lo persiste y lo aísla en el fingerprint',async()=>{
     const dir=await mkdtemp(join(tmpdir(),'abrxs-mediacore-'));directories.push(dir);
     const repo=new FileRepository(join(dir,'projects'),(await import('@abraxas/contracts')).projectSchema);await repo.init();

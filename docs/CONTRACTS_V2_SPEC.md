@@ -287,7 +287,9 @@ target: { kind: ['project','piece','event','asset','media_source'], ref }
 payload?: Record<string, unknown>
 // Regla: un job NUNCA resuelve "el primer evento compatible" cuando declara target.
 // Sin target, el job es sobre el proyecto completo (legado). El target entra en el
-// fingerprint de idempotencia del JobEngine.
+// fingerprint de idempotencia SOLO cuando el caller lo pasa explícitamente: sin
+// options el fingerprint es EXACTAMENTE el legacy {kind,revision,content}, así que
+// los jobs persistidos antes de 0.5.1 siguen deduplicando tras actualizar.
 ```
 
 Notas de migración v2.5: (1) los jobs `abraxas.job.v2` existentes siguen válidos sin

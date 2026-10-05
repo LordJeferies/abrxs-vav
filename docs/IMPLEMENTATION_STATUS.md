@@ -22,7 +22,10 @@
     durationFrames+timebase, dimensiones, codec, audio, proxy/waveform/filmstrip refs.
   - **Job target + payload**: `target {kind: project|piece|event|asset|media_source, ref}`
     y `payload` opcionales en `abraxas.job.v2`. `JobEngine.enqueue(project, kind, {target,
-    payload})` los incluye en el fingerprint de idempotencia; `media.generate` y
+    payload})` incluye target/payload en el fingerprint de idempotencia SOLO cuando el
+    caller los pasa explícitamente — sin options el fingerprint es EXACTAMENTE el legacy
+    `{kind,revision,content}` (verificado por test contra el hash esperado), así que los
+    jobs persistidos antes de 0.5.1 siguen deduplicando tras actualizar. `media.generate` y
     `motion.render` resuelven EXACTAMENTE el evento del target (nunca "el primer evento
     compatible"). Compatibilidad: jobs v2 en disco sin target siguen validando
     (target por defecto = proyecto completo). REAL con tests de compatibilidad.

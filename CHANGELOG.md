@@ -12,7 +12,10 @@
   **Job target + payload** (`target {kind,ref}` + `payload` en `abraxas.job.v2`).
   JSON Schemas generados (`piece.v1`, `media-source.v1`).
 - **Jobs con objetivo explícito**: `JobEngine.enqueue` acepta `{target,payload}`
-  (incluidos en el fingerprint de idempotencia); `POST /api/jobs` y la tool MCP
+  (incluidos en el fingerprint de idempotencia SOLO cuando el caller los pasa
+  explícitamente — sin options, el fingerprint es EXACTAMENTE el legacy
+  `{kind,revision,content}` y los jobs persistidos antes de 0.5.1 siguen
+  deduplicando); `POST /api/jobs` y la tool MCP
   `vav_create_job` los aceptan; `media.generate` / `motion.render` resuelven el evento
   del target — nunca "el primer evento compatible". Compatible con jobs v2 en disco.
 - **Versión normalizada**: `ABRXS_VERSION` (contracts) = fuente única; manifests,
