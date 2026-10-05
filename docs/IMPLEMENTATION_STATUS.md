@@ -3,6 +3,46 @@
 > Estado exacto por hito, marcado REAL / MOCK / EXPERIMENTAL / PENDIENTE.
 > Base heredada: Foundation 0.2.0 (su estado sigue válido, sección inferior).
 
+## REAL (0.6.0 — M1: primer vertical real MASTER → MediaSource → C01 → MP4)
+
+- **EntityRepository** (`apps/service/src/entity-repository.ts`): colección JSON por
+  tipo de entidad (media-sources.json / pieces.json) con escritura atómica (atomicWrite),
+  validación zod por entidad, cache en memoria y SerialQueue. Los ids de entidad NO son
+  uuid ("MS01", "C01"), por eso no pasan por el FileRepository de uuids. Test de
+  upsert/validación/reopen.
+- **media.ingest** (acción `vav.media.ingest` + job con target `media_source`): crea la
+  MediaSource del máster y genera DERIVADOS REALES — probe (con fps RACIONAL canónico
+  parseado de ffprobe, no float), hash streaming sha256, proxy 540p, filmstrip uniforme
+  24 thumbs y waveform → refs persistidas en la entidad. El máster NUNCA se carga en RAM.
+  Sin fps racional → el job FALLA honesto (no se ingesta sin timebase canónica).
+- **canter.create_piece** (`vav.canter.create_piece`): Piece por FRAMES out-exclusivos
+  sobre un MediaSource ingestado; valida existencia, duplicados y rango dentro de
+  durationFrames; provenance manual_cut.
+- **canter.export_piece** (`vav.canter.export_piece`, job target `piece`): corte REAL
+  MP4 vía cutPiece — los frames canónicos se convierten a segundos SOLO en la frontera
+  ffmpeg con la timebase racional del máster; output en exports/<pieza>/ con
+  outputRefs+status actualizados; re-export soportado (payload exportNumber).
+- **Vertical E2E** (`tests/vertical.test.ts`): máster sintético real → ingest completed
+  (hash/timebase/derivados verificados con ffprobe) → C01 → MP4 h264 con duración del
+  rango → REOPEN de tiendas nuevas desde disco: TODO SIGUE EXISTIENDO.
+- **Wiring**: server usa `createJobHandlers(stores)`; 5 acciones nuevas en el
+  ActionCatalog (`vav.media.ingest`, `vav.media.list_sources`, `vav.canter.list_pieces`,
+  `vav.canter.create_piece`, `vav.canter.export_piece`) con 5 tools MCP nuevas —
+  paridad 34↔34. Versión 0.6.0 vía ABRXS_VERSION.
+- **PROJECT_STATUS.json** (`docs/`, schema abrxs.project-status.v1): fuente
+  machine-readable para VAVStatus, protegida por test (schema + vocabulario de estados
+  REAL/PARTIAL/MOCK/PENDING/BLOCKED + coherencia con ABRXS_VERSION). Parte del DoD.
+
+## MOCK / PENDING (0.6.0)
+
+- **UI de Canter** (lista de piezas, viewer, timeline) sigue PENDIENTE — el vertical es
+  de servicio/API/MCP; nada de esto es visible aún en el desktop.
+- **Transcripción** (whisper-cli/mlx_whisper): binarios DETECTADOS en el Mac de
+  desarrollo, integración PENDIENTE (M2). Transcript de la pieza: campo disponible,
+  sin llenado automático aún.
+- Piece/MediaSource: contratos REAL + persistencia REAL; UI/API de browsing REAL;
+  pipeline visual (Dresser) PENDING.
+
 ## REAL (0.5.1 — core hardening A: Piece, MediaSource, Job target, tiempo, versiones, paridad)
 
 - **Helpers de tiempo canónicos** (`packages/contracts/src/time.ts`): `framesToSeconds`,

@@ -60,9 +60,13 @@
         confianza + AI Package roundtrip (8 archivos, diff antes de aplicar) ·
         QA estructural del grafo (/api/qa/analyze) · INSTALL_MAC.command (instalar/
         ejecutar con doble clic) · 32/32 tests · MCP a 28 tools.
-  [ ] PASO 2 — CANTER ADAPTER  ← ← ← SIGUIENTE ACCIÓN
-        Adapter al motor 3.8.1 · Whisper word-level · MediaService por rangos ·
-        confirmación manual de límites. Requiere máster real de podcast del usuario.
+  [x] M1 (2026-10-05) — PRIMER VERTICAL REAL ✅ (rama dev/vav-complete)
+        media.ingest (MediaSource + probe/hash streaming + proxy/filmstrip/waveform)
+        → canter.create_piece por FRAMES → canter.export_piece (corte real MP4)
+        → reopen: proyecto+source+pieza+outputs persisten. E2E con máster sintético.
+  [ ] PASO 2/M2 — TRANSCRIPCIÓN + CANTER COMPLETO  ← ← ← SIGUIENTE ACCIÓN
+        whisper-cli/mlx_whisper (binarios detectados en este Mac) → word-level JSON
+        canónico; texto → rango de pieza; import SRT/TXT existente; UI de piezas.
         Salida: máster real → 10 piezas en el grafo, exportadas limpias.
   [ ] PASO 3 — Vistas compartidas (Lista/Kanban/Mapa XYFlow).
   [ ] PASO 4 — Companion PWA v1 (GitHub Pages) + canal de comandos tipados

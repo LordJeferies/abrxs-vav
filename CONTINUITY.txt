@@ -1,6 +1,15 @@
 # AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
 
-> Última actualización: 2026-10-05 (v0.5.1 — core hardening A en rama dev/0.5.1-media-core)
+> Última actualización: 2026-10-05 (v0.6.0 — M1 vertical real integrado en dev/vav-complete)
+
+## -1. BRANCHING VIGENTE (0.6.0)
+
+- main = estable/release · dev/vav-complete = integración de todo el desarrollo ·
+  dev/0.5.1-media-core = integrado (0.5.1 cerrado; PR #1 y #2 mergeados) ·
+  milestones nuevos: feature/<milestone>-<nombre> → PR → dev/vav-complete.
+- Fuente de estado machine-readable para VAVStatus: docs/PROJECT_STATUS.json
+  (schemaVersion abrxs.project-status.v1; test tests/project-status.test.ts la protege).
+- DoD añade: PROJECT_STATUS.json actualizado + VAVStatus reflejando el estado.
 
 ## 0. NUEVO EN 0.5.1 (leer antes de wire media.ts)
 

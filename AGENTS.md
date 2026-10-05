@@ -98,6 +98,7 @@ Una feature no está terminada solo porque compila. Debe incluir:
 - documentación;
 - comportamiento de fallback;
 - **acción en el ActionCatalog** (ver regla 14);
+- **PROJECT_STATUS.json actualizado y VAVStatus reflejando el estado** (VAVStatus es parte del DoD desde 0.6.0);
 - **cumplimiento del canon UI** (ver regla 15).
 
 ## 14. MCP-first

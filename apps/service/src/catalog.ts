@@ -35,7 +35,13 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.clients.import_txt', module:'clients', summary:'Parsea un TXT del cliente → draft con confianza + diff. No aplica sin confirmación.', method:'POST', path:'/api/clients/:id/import_txt', destructive:false, requiresOpenProject:false, since:'0.5.0' },
   { name:'vav.clients.ai_import', module:'clients', summary:'Importa la respuesta de IA (ABRXS CLIENT PROFILE v1) con diff; apply:true para aplicar.', method:'POST', path:'/api/clients/:id/ai_import', destructive:false, requiresOpenProject:false, since:'0.5.0' },
   { name:'vav.config.resolve', module:'clients', summary:'Config resuelta System→Client→Project→Video→Event (cada valor con su fuente).', method:'GET', path:'/api/config/resolve?client=:id', destructive:false, requiresOpenProject:false, since:'0.5.0' },
-  { name:'vav.qa.analyze', module:'review', summary:'QA estructural del grafo: colisiones, solapes, huecos, referencias desconocidas.', method:'GET', path:'/api/qa/analyze?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' }
+  { name:'vav.qa.analyze', module:'review', summary:'QA estructural del grafo: colisiones, solapes, huecos, referencias desconocidas.', method:'GET', path:'/api/qa/analyze?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' },
+  /* ── 0.6.0 — M1: vertical real MASTER → MediaSource → Piece → MP4 ── */
+  { name:'vav.media.ingest', module:'canter', summary:'Ingesta un máster: MediaSource + job (probe, hash streaming, proxy 540p, filmstrip uniforme, waveform).', method:'POST', path:'/api/media/ingest', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.media.list_sources', module:'canter', summary:'MediaSources persistidas con sus derivados (proxy/filmstrip/waveform refs).', method:'GET', path:'/api/media/sources', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.canter.list_pieces', module:'canter', summary:'Piezas (clips) persistidas, filtrables por projectId.', method:'GET', path:'/api/canter/pieces', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.canter.create_piece', module:'canter', summary:'Crea una Piece: rango por FRAMES (out-exclusivo) sobre un MediaSource ingestado.', method:'POST', path:'/api/canter/pieces', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.canter.export_piece', module:'canter', summary:'Encola el corte real MP4 de una pieza (job canter.export_piece sobre target piece).', method:'POST', path:'/api/canter/pieces/:id/export', destructive:false, requiresOpenProject:true, since:'0.6.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */

@@ -7,4 +7,4 @@
    - mcp/server.mjs (lo consulta de /api/health al inicializar; no lo hardcodea)
    El test tests/version.test.ts verifica la consistencia; no subas una versión
    solo aquí. Actualiza también CHANGELOG.md y docs/IMPLEMENTATION_STATUS.md. */
-export const ABRXS_VERSION = '0.5.1';
+export const ABRXS_VERSION = '0.6.0';

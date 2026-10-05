@@ -1,21 +1,97 @@
 import { setTimeout as wait } from 'node:timers/promises';
-import { graphSchema } from '@abraxas/contracts';
+import { join } from 'node:path';
+import { stat } from 'node:fs/promises';
+import { graphSchema, framesToSeconds, secondsToFrames, type MediaSource, type Piece } from '@abraxas/contracts';
 import type { JobHandler } from '@abraxas/core';
 import { providers } from './providers';
 import { compileComposition, type CompositionSpec } from '@abraxas/motion';
+import { probe, makeProxy, makeFilmstrip, makeWaveform, cutPiece } from './media';
+import type { EntityRepository } from './entity-repository';
+import { exportOutputPath, type CanterStores } from './canter';
 
-export const handlers:Record<string,JobHandler>={
+/* Deps del vertical MASTER → MediaSource → Piece → MP4 (0.6.0). Sin deps,
+   los handlers de media.ingest / canter.export_piece fallan con error claro
+   (los handlers puros —validate/edit-plan/generate/motion— funcionan igual). */
+export interface JobHandlerDeps {
+  mediaSources?: EntityRepository<MediaSource>;
+  pieces?: EntityRepository<Piece>;
+  dataDirectory?: string;
+}
+
+const requireStores = (deps: JobHandlerDeps): CanterStores => {
+  if (!deps.mediaSources || !deps.pieces || !deps.dataDirectory)
+    throw new Error('Handlers de media/canter sin stores: pasa mediaSources, pieces y dataDirectory al servicio.');
+  return { mediaSources: deps.mediaSources, pieces: deps.pieces, dataDirectory: deps.dataDirectory };
+};
+
+export const createJobHandlers = (deps: JobHandlerDeps = {}): Record<string, JobHandler> => ({
+  'media.ingest':async(job,{signal,progress})=>{
+    const stores=requireStores(deps);
+    const sourceId=job.target?.kind==='media_source'?job.target.ref:null;
+    if(!sourceId)throw new Error('media.ingest requiere target media_source explícito.');
+    const source=await stores.mediaSources.get(sourceId);
+    if(!source)throw new Error(`MediaSource ${sourceId} no existe.`);
+    signal.throwIfAborted();
+    await stat(source.ref); // error humano si el archivo no está accesible
+    const info=await probe(source.ref);
+    await progress(0.25);
+    if(!info.fpsNumerator||!info.fpsDenominator||!info.fpsNumerator||info.fpsNumerator<=0)
+      throw new Error(`ffprobe no reportó fps racional para ${source.ref}; no se ingesta sin timebase canónica.`);
+    const timebase={fpsNumerator:info.fpsNumerator,fpsDenominator:info.fpsDenominator};
+    const updated:MediaSource={...source,
+      hash:info.hash,hashAlgorithm:'sha256',
+      timebase,durationFrames:secondsToFrames(info.durationSec,timebase),
+      width:info.width,height:info.height,codec:info.codec??undefined,
+      audio:{present:info.hasAudio}};
+    signal.throwIfAborted();
+    const mediaDir=join(stores.dataDirectory,'media',source.id);
+    updated.proxyRef=await makeProxy(source.ref,mediaDir);
+    await progress(0.55); signal.throwIfAborted();
+    updated.filmstripRef=await makeFilmstrip(source.ref,mediaDir,24,6);
+    await progress(0.8); signal.throwIfAborted();
+    const waveform=await makeWaveform(source.ref,mediaDir); // null honesto si no hay audio
+    if(waveform)updated.waveformRef=waveform;
+    await progress(0.95);
+    await stores.mediaSources.put(updated);
+    return JSON.stringify({source:updated.id,kind:updated.kind,durationFrames:updated.durationFrames,
+      timebase:`${timebase.fpsNumerator}/${timebase.fpsDenominator}`,proxyRef:updated.proxyRef,
+      filmstripRef:updated.filmstripRef,waveformRef:updated.waveformRef,
+      note:'Derivados generados localmente; el máster nunca se cargó completo en RAM.'},null,2);
+  },
+  'canter.export_piece':async(job,{signal,progress})=>{
+    const stores=requireStores(deps);
+    const pieceId=job.target?.kind==='piece'?job.target.ref:null;
+    if(!pieceId)throw new Error('canter.export_piece requiere target piece explícito.');
+    const piece=await stores.pieces.get(pieceId);
+    if(!piece)throw new Error(`Pieza ${pieceId} no existe.`);
+    const source=await stores.mediaSources.get(piece.sourceRef);
+    if(!source)throw new Error(`MediaSource ${piece.sourceRef} de la pieza no existe.`);
+    if(!source.timebase||source.durationFrames==null)
+      throw new Error(`El máster ${source.id} no está ingestado (sin timebase/duración). Ejecuta media.ingest.`);
+    const exportNumber=Number((job.payload as {exportNumber?:unknown}|undefined)?.exportNumber??piece.outputRefs.length+1);
+    const outPath=exportOutputPath(stores,piece,exportNumber);
+    signal.throwIfAborted();
+    // Frames canónicos → segundos SOLO en la frontera ffmpeg (timebase racional del máster).
+    const out=await cutPiece(source.ref,
+      framesToSeconds(piece.sourceRange.startFrame,source.timebase),
+      framesToSeconds(piece.sourceRange.endFrame,source.timebase),outPath);
+    await progress(0.9); signal.throwIfAborted();
+    const saved=await stores.pieces.put({...piece,status:'exported',
+      outputRefs:[...piece.outputRefs.filter(r=>!r.startsWith(outPath)),outPath]});
+    return JSON.stringify({piece:saved.id,output:outPath,range:saved.sourceRange,
+      timebase:`${source.timebase.fpsNumerator}/${source.timebase.fpsDenominator}`},null,2);
+  },
   'motion.render':async(job,{signal,progress})=>{
     // Composiciones motion viven en los eventos del grafo (extensions.motionComposition).
     // v2.5: si el job declara target event, renderiza SOLO ese evento (nunca otros por conveniencia).
     const all=job.input.graph.events.filter(e=>e.extensions&&typeof e.extensions==='object'&&'motionComposition'in e.extensions);
     const events=job.target?.kind==='event'?all.filter(e=>e.id===job.target!.ref):all;
     if(!events.length)throw new Error(job.target?.kind==='event'?`El evento objetivo ${job.target.ref} no tiene motionComposition.`:'El proyecto no tiene eventos con motionComposition.');
-    const specs=events.map((e,i)=>{
+    const specs=events.map((e)=>{
       signal.throwIfAborted();
       const spec=compileComposition(e.extensions!.motionComposition as CompositionSpec);
       return {event:e.id,compositionId:spec.compositionId,layers:spec.layers.length,ffmpeg:spec.ffmpeg};
-    }).map((s,idx)=>{void idx;return s;});
+    });
     await progress(0.6); signal.throwIfAborted();
     await progress(0.9);
     return JSON.stringify({specVersion:'abrxs.motion-render.v1',compositions:specs,note:'RenderSpec Remotion-ready + comandos FFmpeg por capa. El render final entra con el bundle Remotion (paso 7).'},null,2);
@@ -67,4 +143,8 @@ export const handlers:Record<string,JobHandler>={
     }
     return lines.join('\n');
   }
-};
+});
+
+/** Handlers sin stores (legacy/tests): media.ingest y canter.export_piece fallan
+    con error claro si alguien los encola sin wiring del servicio. */
+export const handlers:Record<string,JobHandler>=createJobHandlers();
