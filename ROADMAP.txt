@@ -1,0 +1,123 @@
+════════════════════════════════════════════════════════════════════
+  ABRXSVAV — ROADMAP, ESTADO Y CÓMO CONTINUAR
+  (AbrxsVAV = Video · Audio · Visual · familia Abraxas · LordJeferies)
+  Última actualización: 2026-10-04
+════════════════════════════════════════════════════════════════════
+
+▸ QUÉ ES ESTE PROYECTO
+  Una app de escritorio (Tauri + React, con companion PWA) donde un proyecto
+  va desde un guion o un podcast crudo hasta piezas terminadas, vestidas,
+  revisadas y entregadas. 11 estaciones: HUB · PLAN · CANTER · DRESSER ·
+  VISUAL LAB · WORKFLOW STUDIO · REVIEW · DELIVERY · CLIENTS · LIBRARY ·
+  ACTIVITY. La IA propone, el humano aprueba (HITL por diseño). Todo el core
+  es operable por MCP. Barra de calidad: la intro del EP55 es el mínimo.
+
+▸ CÓMO CONTINUAR EL DESARROLLO DESDE CUALQUIER APP (agente o humano)
+  1. Lee, en este orden:
+     docs/00_ABRSX_VAV_ADDENDUM.md   ← gana sobre cualquier otro doc
+     AGENTS.md                        ← reglas de comportamiento
+     docs/BUILD_PLAN_11_STEPS.md      ← orden de construcción + verificación
+     docs/STATIONS_SPEC.md            ← qué construir por estación
+     docs/CONTRACTS_V2_SPEC.md        ← schemas a implementar (paso 1)
+     docs/IMPLEMENTATION_STATUS.md    ← qué es REAL hoy (no re-implementar)
+     WORK_START_PROMPT.md             ← la tarea EXACTA del paso en curso
+  2. Antes de tocar código:
+     npm ci && npm run check && npm test && npm run build   (todo debe pasar)
+  3. Al terminar cada paso: commit → tag → actualizar
+     docs/IMPLEMENTATION_STATUS.md (REAL/MOCK/PENDIENTE) + CHANGELOG.md.
+  4. Regla número uno: el Production Graph es la única fuente de verdad.
+  5. PROHIBIDO: usar task.py de MoneyPrinterTurbo · providers de IA antes
+     del paso 1 completo · reescribir Canter 3.8.1 / Review 05 · segundas
+     fuentes de verdad · código AGPL/PolyForm (ver docs/SOURCES_AND_REUSE.md).
+
+▸ ESTADO ACTUAL (2026-10-04) — PASO 0 COMPLETADO ✅
+  Repo creado desde abraxas-os-foundation (Foundation 0.2.0, núcleo REAL).
+  - Branding AbrxsVAV aplicado (scope interno @abraxas/* intacto).
+  - Documentación completa (13 docs): addendum maestro, spec por estación,
+    contratos v2.2/v2.3, plan de 11 pasos, MCP-first, Handoff UX, nubes y
+    providers (Supabase/Drive/NVIDIA), estabilidad, canon UI Apple, QA,
+    fuentes de copia, investigación Apple Design 2026.
+  - packages/ui con tokens.css + materials.css (design system dark-first).
+  - AGENTS.md ampliado (MCP-first, canon UI, handoff, prohibiciones).
+  - WORK_START_PROMPT.md = instrucciones exactas del PASO 1.
+  - Verificado: npm install + build (291 módulos) + 9 tests + check + doctor
+    en verde. Git inicializado; primer commit hecho.
+
+▸ ROADMAP — 11 PASOS (detalle y criterios: docs/BUILD_PLAN_11_STEPS.md)
+
+  [x] PASO 0 — Repo + branding + docs + tokens + CI verde
+  [ ] PASO 1 — CORE DESKTOP  ← ← ← SIGUIENTE ACCIÓN
+        Contracts v2.3 en TS/Zod · ActionCatalog · scaffold MCP (mcp/server.mjs
+        con vav_status/doctor/projects/graph/jobs/smoke) · watchdog + cache
+        del JobEngine · Error Boundaries por módulo · autosave de sesión ·
+        corpus sintético de CI · TEST DE CRASH (matar app a mitad de job →
+        recuperar). Instrucciones exactas: WORK_START_PROMPT.md.
+        PROHIBIDO providers de IA en este paso.
+  [ ] PASO 2 — Canter integrado (adapter al motor 3.8.1, MediaService por
+        rangos). Salida: máster real → 10 piezas en el grafo, exportadas.
+  [ ] PASO 3 — Vistas compartidas (Lista/Kanban/Mapa XYFlow).
+  [ ] PASO 4 — Companion PWA v1 (GitHub Pages) + canal de comandos tipados
+        + Supabase (workspace abrxs-vav, tablas vav_state/vav_commands).
+        Salida: aprobar un checkpoint desde el iPhone y verlo aplicado.
+  [ ] PASO 5 — Dresser MVP = Batch B-roll (ghost events, Asset Finder,
+        Ken Burns, captions básicos, auto-approve, Import Result v1).
+        Salida: 20 clips → 20 MP4; el 19 falla, los otros 19 siguen.
+  [ ] PASO 6 — Visual Lab MVP (search paralelo, Generation Space, compare
+        A/B, Handoff UX completa, enhance, strict free mode).
+        Salida: handoff a IA externa y retorno sin reconfigurar nada.
+  [ ] PASO 7 — XR Composer + familias canon R6 (TYPO/PHOTOS/OBJECTS/
+        PHOTO_OBJECT/COMIC_INFO) + variants + MPT service adapter.
+        Salida: XR03 Amanda — 1 máster + 5 estados FFmpeg → FINAL; editar
+        timing NO re-llama IA.
+  [ ] PASO 8 — Captions scene-aware + Delivery compile (NlePlan desde el
+        grafo, kits DaVinci/CapCut, reference render, provenance report).
+  [ ] PASO 9 — Workflow Studio (XYFlow + HITL) + Review desktop completo.
+  [ ] PASO 10 — Faceless Mode + Browser Adapter plugin + updater +
+        workspaces + templates + i18n + galería /design + visual regression.
+
+▸ LO QUE ESTÁ PENDIENTE DE PARTE DEL USUARIO (no bloquea el paso 1)
+  - Crear/entregar API keys cuando llegue su paso: Pexels/Pixabay (gratis,
+    paso 5), providers de IA pagados (pasos 6–7), NVIDIA NIM (ya tiene key),
+    Supabase (ya tiene proyecto; crear workspace abrxs-vav en el paso 4).
+  - Medios reales para QA (podcasts, clips) en los pasos 2 y 5.
+  - Aprobaciones editoriales durante el uso (por diseño HITL).
+
+▸ DECISIONES DE INFRAESTRUCTURA YA CERRADAS
+  - Supabase: mismo proyecto jzqxfhlowlllkiqvuqtd, workspace_key abrxs-vav,
+    payload vav.v1. Drive: readonly-first (patrón Abrxs-Review drive.js).
+  - NVIDIA NIM: provider de llm/image/vision (NO de video).
+  - Firebase: solo fallback documentado.
+  - MCP: ActionCatalog único → UI / PWA / mcp/server.mjs / tests.
+  - Apple Design 2026 investigado: Liquid Glass = solo capa funcional,
+    scroll edge effects + glass tint adoptados (docs/APPLE_HIG_RESEARCH.md).
+
+▸ VERIFICACIÓN RÁPIDA (desde la raíz del repo)
+    npm run check   → contratos y schemas sincronizados
+    npm test        → 9 tests del core
+    npm run build   → build de la UI
+    npm run doctor  → salud del entorno
+    npm run dev     → UI en http://127.0.0.1:1420
+
+▸ CONEXIÓN GITHUB
+    Remote esperado: https://github.com/LordJeferies/abrxs-vav.git
+    (ver GITHUB_SETUP.md y el comando gh del changelog/chat).
+    Reglas: nunca publicar .abraxas-data/ ni secretos; releases con tag.
+
+▸ ÍNDICE DE DOCUMENTOS
+    ROADMAP.txt                       este archivo
+    README.md                         visión rápida + mapa de docs
+    docs/00_ABRSX_VAV_ADDENDUM.md     documento maestro (gana conflictos)
+    docs/STATIONS_SPEC.md             spec de las 11 estaciones
+    docs/BUILD_PLAN_11_STEPS.md       plan de construcción (fuente del orden)
+    docs/CONTRACTS_V2_SPEC.md         schemas Zod v2.2/v2.3
+    docs/MCP_INTEGRATION.md           MCP-first + tools por paso
+    docs/HANDOFF_UX.md                prompts para IA externa (copiar/TXT/batch)
+    docs/CLOUD_AND_PROVIDERS.md       Supabase · Drive · NVIDIA · Firebase
+    docs/STABILITY_REQUIREMENTS.md    P0 de estabilidad
+    docs/UI_CANON.md                  canon visual normativo
+    docs/APPLE_HIG_RESEARCH.md        investigación Apple Design 2026
+    docs/UI_QA_CHECKLIST.md           aceptación visual por pantalla
+    docs/SOURCES_AND_REUSE.md         qué se copia de cada repo (licencias)
+    docs/IMPLEMENTATION_STATUS.md     REAL / MOCK / PENDIENTE
+    CHANGELOG.md                      historial de versiones
+════════════════════════════════════════════════════════════════════

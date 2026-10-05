@@ -18,6 +18,11 @@
   LiquidGlass solo en UI layer, modos de accesibilidad).
 - AGENTS.md ampliado con reglas MCP-first, canon UI, provenance y Definition of Done.
 - WORK_START_PROMPT.md reescrito para arrancar el paso 1 con contexto completo.
+- Investigación Apple Design 2026 (whats-new/get-started/HIG/resources): doc
+  APPLE_HIG_RESEARCH.md con validaciones externas del diseño y 5 adopciones nuevas
+  (scroll edge effects, glass tint, checklist HIG de IA, ícono en capas, UI kits 27
+  como referencia). UI_CANON.md §13 nuevo; ROADMAP.txt añadido para continuar el
+  desarrollo desde cualquier app/agente.
 
 ## Foundation 0.2.0 · 2026-10-02
 

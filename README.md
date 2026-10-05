@@ -20,6 +20,7 @@ REVIEW · DELIVERY · CLIENTS · LIBRARY · ACTIVITY
 | PREGUNTA | DOC |
 |---|---|
 | Qué es, qué NO es, principios, prohibiciones | `docs/00_ABRSX_VAV_ADDENDUM.md` |
+| Roadmap y estado en texto plano (para cualquier app/agente) | `ROADMAP.txt` |
 | Qué hace y cómo se construye CADA estación | `docs/STATIONS_SPEC.md` |
 | En qué orden se construye (11 pasos, verificación por paso) | `docs/BUILD_PLAN_11_STEPS.md` |
 | Contratos v2.2/v2.3 (schemas Zod listos para implementar) | `docs/CONTRACTS_V2_SPEC.md` |
@@ -28,6 +29,7 @@ REVIEW · DELIVERY · CLIENTS · LIBRARY · ACTIVITY
 | Supabase / Drive / NVIDIA / Firebase | `docs/CLOUD_AND_PROVIDERS.md` |
 | Estabilidad: atomicidad, watchdog, circuit breakers | `docs/STABILITY_REQUIREMENTS.md` |
 | Canon visual (tokens, dos capas, glass, estados) | `docs/UI_CANON.md` |
+| Investigación Apple Design 2026 (HIG, Liquid Glass, IA) | `docs/APPLE_HIG_RESEARCH.md` |
 | Checklist de aceptación visual por pantalla | `docs/UI_QA_CHECKLIST.md` |
 | Qué se copia de cada repo (licencias, provenance) | `docs/SOURCES_AND_REUSE.md` |
 | Estado real: REAL / MOCK / PENDIENTE | `docs/IMPLEMENTATION_STATUS.md` |

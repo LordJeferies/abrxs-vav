@@ -135,3 +135,19 @@ cortes; sin scroll horizontal accidental; mouse+touch+teclado donde corresponde;
 motion/transparency contemplados; 60 fps; el contenido conserva el protagonismo; **la UI
 se siente diseñada, no generada por template**. Lo no probado se declara pendiente —
 nunca se afirma sin evidencia.
+
+## 13. Novedades Apple (2026) adoptadas
+
+Ver `docs/APPLE_HIG_RESEARCH.md` (investigación completa con fuentes). Reglas nuevas:
+
+1. **Scroll edge effects**: panel con scroll bajo una barra glass lleva fundido superior
+   (y si aplica, inferior) para que el vidrio se lea — token `--scroll-edge-fade` en
+   `packages/ui`.
+2. **Variantes de glass**: estándar, strong (solo modal) y `--material-glass-tint`
+   (tinte del accent del proyecto activo, solo en navegación/selección, nunca contenido).
+3. **Checklist HIG de IA en toda feature con IA** (respaldo directo de la guía Apple
+   "Generative AI"): revisión humana antes de usar · progreso con interrupción ·
+   regenerar/refinar · modelo elegible y explicado · salida explicada.
+4. **Ícono de app** en lenguaje Liquid Glass (diseño en el paso 10; referencia Icon Composer).
+5. Referencia visual: UI Kits Figma macOS/iOS 27 ("liquid glass materials"); SF Symbols
+   como referencia semántica de glifos — el set de la app sigue siendo Lucide.
