@@ -1,9 +1,14 @@
 import { jobSchema, type Job, type Project } from '@abraxas/contracts';
 import { NotFoundError, SerialQueue, type Repository } from './project-store';
 export type JobHandler = (job:Job,context:{signal:AbortSignal;progress:(value:number)=>Promise<void>})=>Promise<string>;
+export interface JobEngineOptions {
+  /** Watchdog: tiempo máximo por tipo de trabajo (ms). Al expirar se aborta y marca failed. */
+  watchdogMs?:Record<string,number>;
+  defaultWatchdogMs?:number;
+}
 export class JobEngine {
   private queue=new SerialQueue(); private active=new Map<string,AbortController>(); private pumping=false; private stopped=false; private runningTask:Promise<void>=Promise.resolve();
-  constructor(private repository:Repository<Job>,private handlers:Record<string,JobHandler>,private fingerprint:(value:string)=>string){}
+  constructor(private repository:Repository<Job>,private handlers:Record<string,JobHandler>,private fingerprint:(value:string)=>string,private options:JobEngineOptions={}){}
   list(){return this.repository.list();}
   async get(id:string){const j=await this.repository.get(id);if(!j)throw new NotFoundError('Trabajo no encontrado.');return j;}
   async recover(){
@@ -41,6 +46,8 @@ export class JobEngine {
       });
       if(!job||this.stopped)return;
       const controller=new AbortController();this.active.set(job.id,controller);
+      const watchdogMs=this.options.watchdogMs?.[job.kind]??this.options.defaultWatchdogMs;
+      const watchdog=watchdogMs?setTimeout(()=>controller.abort(new Error(`Watchdog: el trabajo excedió ${Math.round(watchdogMs/1000)} s y fue cancelado.`)),watchdogMs):null;
       try{
         const handler=this.handlers[job.handler];if(!handler)throw new Error('Handler no instalado.');
         const output=await handler(job,{signal:controller.signal,progress:value=>this.queue.run(async()=>{
@@ -48,8 +55,9 @@ export class JobEngine {
         })});
         await this.queue.run(async()=>{const current=await this.get(job.id);if(current.status==='running'&&!this.stopped&&!controller.signal.aborted)await this.save({...current,status:'completed',progress:1,output});});
       }catch(error){
-        await this.queue.run(async()=>{const current=await this.get(job.id);if(current.status==='running'&&!this.stopped)await this.save({...current,status:'failed',error:error instanceof Error?error.message:'Trabajo fallido.'});});
-      }finally{this.active.delete(job.id);}
+        const message=error instanceof Error?error.message:'Trabajo fallido.';
+        await this.queue.run(async()=>{const current=await this.get(job.id);if(current.status==='running'&&!this.stopped)await this.save({...current,status:'failed',error:message});});
+      }finally{if(watchdog)clearTimeout(watchdog);this.active.delete(job.id);}
     }
   }
 }

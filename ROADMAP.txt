@@ -46,13 +46,15 @@
 ▸ ROADMAP — 11 PASOS (detalle y criterios: docs/BUILD_PLAN_11_STEPS.md)
 
   [x] PASO 0 — Repo + branding + docs + tokens + CI verde
-  [ ] PASO 1 — CORE DESKTOP  ← ← ← SIGUIENTE ACCIÓN
-        Contracts v2.3 en TS/Zod · ActionCatalog · scaffold MCP (mcp/server.mjs
-        con vav_status/doctor/projects/graph/jobs/smoke) · watchdog + cache
-        del JobEngine · Error Boundaries por módulo · autosave de sesión ·
-        corpus sintético de CI · TEST DE CRASH (matar app a mitad de job →
-        recuperar). Instrucciones exactas: WORK_START_PROMPT.md.
-        PROHIBIDO providers de IA en este paso.
+  [x] PASO 1 — CORE DESKTOP (0.4.0) ✅
+        Contracts v2.3 · ActionCatalog real (12 acciones /api/catalog) · servidor MCP
+        mcp/server.mjs (13 tools, vav_smoke E2E probado contra el servicio real:
+        proyecto → job completed → undo/redo) · watchdog del JobEngine · Error
+        Boundaries por módulo · corpus sintético de CI · 12/12 tests.
+  [ ] PASO 2 — CANTER ADAPTER  ← ← ← SIGUIENTE ACCIÓN
+        Adapter al motor 3.8.1 · Whisper word-level · MediaService por rangos ·
+        confirmación manual de límites. Instrucciones: docs/STATIONS_SPEC.md §3.
+        Salida: máster real de podcast → 10 piezas en el grafo, exportadas limpias.
   [ ] PASO 2 — Canter integrado (adapter al motor 3.8.1, MediaService por
         rangos). Salida: máster real → 10 piezas en el grafo, exportadas.
   [ ] PASO 3 — Vistas compartidas (Lista/Kanban/Mapa XYFlow).

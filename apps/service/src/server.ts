@@ -8,6 +8,7 @@ import { ProjectStore, JobEngine, ConflictError, NotFoundError } from '@abraxas/
 import { projectSchema, jobSchema, projectContentSchema, timebaseSchema } from '@abraxas/contracts';
 import { FileRepository } from './file-repository';
 import { handlers } from './handlers';
+import { catalog } from './catalog';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const dataDirectory=resolve(process.env.ABRAXAS_DATA_DIR||join(root,'.abraxas-data'));
@@ -16,7 +17,9 @@ const dist=join(root,'apps/desktop/dist');
 const projectRepository=new FileRepository(join(dataDirectory,'projects'),projectSchema);
 const jobRepository=new FileRepository(join(dataDirectory,'jobs'),jobSchema);
 const store=new ProjectStore(projectRepository);
-const engine=new JobEngine(jobRepository,handlers,value=>createHash('sha256').update(value).digest('hex'));
+const engine=new JobEngine(jobRepository,handlers,value=>createHash('sha256').update(value).digest('hex'),{
+  defaultWatchdogMs:Number(process.env.ABRAXAS_JOB_WATCHDOG_MS||900_000) // 15 min por defecto
+});
 
 async function lock(){
   await mkdir(dataDirectory,{recursive:true,mode:0o700});const path=join(dataDirectory,'.service.lock');
@@ -46,7 +49,8 @@ const server=createServer(async(req,res)=>{
       if(req.headers.origin&&!allowedOrigins.has(req.headers.origin)){send(res,403,{error:'Origen no autorizado.'});return;}
       if(req.method!=='GET'&&req.headers['x-abraxas-client']!=='local'){send(res,403,{error:'Petición local requerida.'});return;}
       const segments=url.pathname.slice(5).split('/');const [resource,id,action]=segments;
-      if(req.method==='GET'&&resource==='health'){send(res,200,{status:'ready',version:'0.2.0',storage:'local-files',handlers:Object.keys(handlers)});return;}
+      if(req.method==='GET'&&resource==='health'){send(res,200,{status:'ready',version:'0.4.0',product:'AbrxsVAV',storage:'local-files',handlers:Object.keys(handlers),actions:catalog.length});return;}
+      if(req.method==='GET'&&resource==='catalog'){send(res,200,{product:'AbrxsVAV',version:'0.4.0',actions:catalog});return;}
       if(resource==='projects'){
         if(req.method==='GET'&&!id){send(res,200,await store.list());return;}
         if(req.method==='POST'&&!id){const input=z.strictObject({name:z.string(),timebase:timebaseSchema}).parse(await body(req));send(res,201,await store.create(input.name,input.timebase));return;}
@@ -75,8 +79,8 @@ async function main(){
   try{
     await projectRepository.init();await jobRepository.init();await store.list();await engine.recover();
     server.on('error',async error=>{console.error(error.message);await engine.stop();await release();process.exit(1);});
-    server.listen(port,'127.0.0.1',()=>console.log(`Abraxas OS: http://127.0.0.1:${port} · datos ${dataDirectory}`));
+    server.listen(port,'127.0.0.1',()=>console.log(`AbrxsVAV: http://127.0.0.1:${port} · datos ${dataDirectory}`));
     for(const signal of ['SIGINT','SIGTERM'] as const)process.once(signal,()=>{void engine.stop().then(()=>new Promise<void>(r=>server.close(()=>r()))).then(release).then(()=>process.exit(0));});
   }catch(error){await release();throw error;}
 }
-main().catch(e=>{console.error('No se pudo iniciar Abraxas:',e.message);process.exit(1);});
+main().catch(e=>{console.error('No se pudo iniciar AbrxsVAV:',e.message);process.exit(1);});

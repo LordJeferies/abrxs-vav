@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "abraxas.project.v1",
+  "id": "7d1f6a4e-0f3a-4a55-9d2e-6f0d3c1b2a10",
+  "revision": 0,
+  "createdAt": "2026-10-04T00:00:00.000Z",
+  "updatedAt": "2026-10-04T00:00:00.000Z",
+  "content": {
+    "name": "CORPUS · Podcast sintético EP00",
+    "graph": {
+      "schemaVersion": "abraxas.production-graph.v2",
+      "projectId": "7d1f6a4e-0f3a-4a55-9d2e-6f0d3c1b2a10",
+      "timebase": { "fpsNumerator": 30000, "fpsDenominator": 1001 },
+      "events": [
+        { "id": "AR01_master", "label": "A-roll · bloque de apertura", "kind": "a_roll", "startFrame": 0, "endFrame": 600, "status": "planned" },
+        { "id": "BR01_tokyo", "label": "B-roll · ciudad de noche con lluvia", "kind": "b_roll", "startFrame": 120, "endFrame": 264, "status": "ghost", "extensions": { "purpose": "ilustrar la metáfora de la ciudad que no duerme", "anchorText": "la ciudad no duerme nunca", "brollType": "photo_ken_burns", "stockQuery": "tokyo night rain vertical", "sourcePriority": ["client", "stock", "ai_image"] } },
+        { "id": "XR01_comic", "label": "X-roll · COMIC_INFO reválida", "kind": "xr", "startFrame": 660, "endFrame": 960, "status": "ghost", "visualTypeId": "xroll.comic-info@1.2.0", "extensions": { "purpose": "saturación de información sobre la reválida", "productionState": "beta", "states": [ { "id": "S01", "cameraMove": "push_in", "durationFrames": 60 }, { "id": "S02", "cameraMove": "pan_ll_lr", "durationFrames": 54 }, { "id": "S03", "cameraMove": "pan_full", "durationFrames": 66 } ], "deliverable": "final" } },
+        { "id": "CAP01_karaoke", "label": "Captions · karaoke Amanda", "kind": "caption", "startFrame": 0, "endFrame": 600, "status": "planned", "extensions": { "captionPolicy": "full", "style": "amanda.vertical.v1" } },
+        { "id": "SFX01_whoosh", "label": "SFX · transición", "kind": "sfx", "startFrame": 660, "endFrame": 690, "status": "planned", "extensions": { "sfxRole": "SFX_WHOOSH", "variant": "medium", "trigger": "entrada del X-roll", "purpose": "motivar el corte visual" } }
+      ]
+    }
+  },
+  "history": { "undo": [], "redo": [] }
+}

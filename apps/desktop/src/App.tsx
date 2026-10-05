@@ -1,6 +1,7 @@
 import { useWorkspace } from './workspace';
 import { ProjectHub } from './ProjectHub';
 import { Activity } from './Activity';
+import { ModuleErrorBoundary } from './ModuleErrorBoundary';
 import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 const Workflow = lazy(()=>import('./Workflow'));
 
@@ -27,15 +28,15 @@ export function App(){
   const w=useWorkspace();
   const station=useMemo(()=>stations.find(s=>s.id===active)!,[active]);
   return <div className="app-shell">
-    <aside className="sidebar glass">
-      <div className="brand"><div className="mark">A</div><div><strong>ABRAXAS OS</strong><span>Estudio de producción · v0.2</span></div></div>
+      <aside className="sidebar glass">
+        <div className="brand"><div className="mark">V</div><div><strong>ABRXSVAV</strong><span>Video · Audio · Visual · v0.4</span></div></div>
       <nav aria-label="Estaciones">{stations.map(s=><button key={s.id} className={active===s.id?'active':''} onClick={()=>setActive(s.id)}><b>{s.label}{(s.id==='hub'||s.id==='activity')&&<span className="nav-dot"/>}</b><small>{s.description}</small></button>)}</nav>
       <div className="sidebar-foot">Planificar · cortar · vestir · revisar</div>
     </aside>
     <main>
       <header className="topbar glass"><div><small>PROYECTO</small><h1>{w.project?.content.name||'Sin proyecto abierto'}</h1></div><div className="status"><span className={`dot ${w.connected?'':'offline'}`}/>{w.busy?'Guardando…':w.connected?'Servicio local conectado':'Servicio local desconectado'}</div></header>
       {w.error&&<div className="error-banner" role="alert"><span>{w.error}</span><button disabled={w.busy} onClick={()=>void w.reload()}>Recargar datos</button><button onClick={()=>w.setError('')}>Cerrar</button></div>}
-      {!w.ready?<div className="content">Abriendo tu estudio…</div>:active==='hub'?<ProjectHub workspace={w}/>:active==='activity'?<Activity workspace={w}/>:active==='workflow'?<Suspense fallback={<div className="content">Abriendo Workflow Studio…</div>}><Workflow/></Suspense>:<StationPage title={station.label} description={station.description} status="Pendiente de implementación"/>}
+      {!w.ready?<div className="content">Abriendo tu estudio…</div>:<ModuleErrorBoundary key={active} moduleId={active}>{active==='hub'?<ProjectHub workspace={w}/>:active==='activity'?<Activity workspace={w}/>:active==='workflow'?<Suspense fallback={<div className="content">Abriendo Workflow Studio…</div>}><Workflow/></Suspense>:<StationPage title={station.label} description={station.description} status="Pendiente de implementación"/>}</ModuleErrorBoundary>}
     </main>
   </div>
 }

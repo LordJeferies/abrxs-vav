@@ -1,5 +1,21 @@
 # Cambios
 
+## AbrxsVAV 0.4.0 · 2026-10-04 (paso 1 del plan de 11)
+
+- Contracts v2.3: delta aditivo en `@abraxas/contracts` — MaterializationStrategy,
+  VisualPlanItem, AssetSlot, XrFamilyDefinition, EditGrammar, HandoffPackage,
+  ImportResult, PromptRecord, ActionDefinition (12/12 tests verdes).
+- ActionCatalog real: `/api/catalog` con las 12 acciones vav.* del servicio —
+  principio MCP-first: UI, companion, MCP y tests consumen el mismo catálogo.
+- Servidor MCP local `mcp/server.mjs` (stdio, cero dependencias): 13 herramientas,
+  incluida `vav_smoke` (E2E real: proyecto → job completed → undo/redo). Escrituras
+  exigen confirm:true; modo READ_ONLY disponible.
+- Watchdog del JobEngine: timeout por tipo de trabajo (default 15 min, configurable).
+- Shell: ModuleErrorBoundary por estación; branding ABRXSVAV v0.4 en la UI.
+- Corpus sintético de CI en `samples/corpus/` (podcast con ghost events del canon).
+- Sitio oficial en Pages: https://lordjeferies.github.io/abrxsvavstatus/ (status
+  dinámico desde este repo + asistente local sin nube).
+
 ## AbrxsVAV 0.3.0 · 2026-10-04 (paso 0 del plan de 11)
 
 - Renombrado a AbrxsVAV (branding visible: título de ventana, productName, README).

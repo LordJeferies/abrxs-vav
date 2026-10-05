@@ -1,24 +1,47 @@
-# Implementation Status · AbrxsVAV 0.3.0 (paso 0 del plan de 11)
+# Implementation Status · AbrxsVAV 0.4.0 (pasos 0–1 del plan de 11)
 
 > Base heredada: Foundation 0.2.0 (su estado REAL/MOCK/PENDIENTE sigue válido y está en
 > la sección inferior de este archivo). Este bloque refleja el delta AbrxsVAV.
 
-## REAL (0.3.0)
+## REAL (0.4.0 — paso 1 completo)
+
+- Contracts v2.3 en TS/Zod (delta aditivo sobre project v1/job v2): MaterializationStrategy,
+  VisualPlanItem, AssetSlot, XrFamilyDefinition, EditGrammar, HandoffPackage/ImportResult,
+  PromptRecord, ActionDefinition, CaptionPolicy, DeliverableLevel. 12/12 tests verdes
+  (incluye corpus sintético que valida contratos v2.3 de punta a punta).
+- ActionCatalog real en el servicio (`/api/catalog`) con 12 acciones tipadas vav.* —
+  la única lista de acciones del sistema (UI/companion/MCP/tests consumen lo mismo).
+- Servidor MCP local (`mcp/server.mjs`, stdio, sin dependencias): 13 herramientas
+  incluida `vav_smoke` E2E. Probado contra el servicio real: crear proyecto → job
+  completed → undo/redo — **smoke passed**. Escrituras exigen confirm:true;
+  VAV_MCP_READ_ONLY disponible.
+- Watchdog del JobEngine (timeout por tipo de trabajo, default 15 min configurable
+  ABRAXAS_JOB_WATCHDOG_MS) — el job colgado se aborta y queda failed con explicación.
+- Error Boundary por módulo en el shell (un módulo caído no tumba la app) + branding
+  AbrxsVAV en la UI (ABRXSVAV v0.4).
+- Corpus sintético de CI (`samples/corpus/corpus-podcast-v1.json`): podcast sintético
+  con ghost events B-roll/X-roll/captions/SFX según el canon de contenido.
+- Crash test existente de Foundation verificado: recover marca running→interrupted y el
+  retry re-ejecuta el snapshot original.
+- Sitio oficial publicado: https://lordjeferies.github.io/abrxsvavstatus/ con status
+  dinámico desde este repo + asistente local.
+
+## REAL (0.3.0 — paso 0)
 
 - Repo `abrxs-vav` creado desde Foundation 0.2.0; branding visible renombrado
   (README, título de ventana, productName, index.html). Scope interno `@abraxas/*` intacto.
 - Documentación completa: addendum maestro, STATIONS_SPEC, BUILD_PLAN_11_STEPS,
   CONTRACTS_V2_SPEC, MCP_INTEGRATION, HANDOFF_UX, CLOUD_AND_PROVIDERS,
-  STABILITY_REQUIREMENTS, UI_CANON, UI_QA_CHECKLIST, SOURCES_AND_REUSE.
+  STABILITY_REQUIREMENTS, UI_CANON, APPLE_HIG_RESEARCH, UI_QA_CHECKLIST,
+  SOURCES_AND_REUSE, CONTENT_TYPES_SPEC, ROADMAP.txt.
 - `packages/ui` con `tokens.css` + `materials.css` (design system dark-first del canon).
 
 ## PENDIENTE (sigue el BUILD_PLAN_11_STEPS.md)
 
-- Paso 1: contracts v2.3 en TS/Zod + ActionCatalog + scaffold MCP + watchdog/cache del
-  JobEngine + Error Boundaries + corpus sintético. (El Lote 1 del chat anterior es el
-  material de partida; se integra y valida, no se asume.)
-- Pasos 2–10: Canter adapter, vistas compartidas, companion PWA, Dresser batch,
-  Visual Lab, XR Composer, captions/delivery, workflow studio, faceless/browser.
+- Paso 2: Canter adapter (motor 3.8.1 + Whisper + MediaService por rangos + confirmación
+  de cortes). Es el salto de "core certificado" a "producción real".
+- Pasos 3–10: vistas compartidas, companion PWA, Dresser batch, Visual Lab, XR Composer,
+  captions/delivery, Workflow Studio, Faceless/browser adapter.
 
 ---
 
