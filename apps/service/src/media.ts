@@ -31,21 +31,27 @@ export const sha256File = (p: string): Promise<string> => new Promise((resolve, 
 /* ── Probe ── */
 export interface MediaInfo {
   path: string; hash: string; durationSec: number; width: number; height: number;
-  fps: number; hasAudio: boolean; sizeBytes: number;
+  fps: number; fpsNumerator?: number; fpsDenominator?: number; codec?: string;
+  hasAudio: boolean; sizeBytes: number;
 }
 export async function probe(file: string): Promise<MediaInfo> {
   await stat(file); // error humano si no existe
   const { stdout } = await run('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', file], 30_000);
-  const j = JSON.parse(stdout) as { format?: { duration?: string; size?: string }; streams?: Array<{ codec_type?: string; width?: number; height?: number; avg_frame_rate?: string; r_frame_rate?: string }> };
+  const j = JSON.parse(stdout) as { format?: { duration?: string; size?: string }; streams?: Array<{ codec_type?: string; codec_name?: string; width?: number; height?: number; avg_frame_rate?: string; r_frame_rate?: string }> };
   const v = j.streams?.find(s => s.codec_type === 'video');
   const a = j.streams?.some(s => s.codec_type === 'audio');
   if (!v) throw new Error('El archivo no tiene pista de video.');
-  const [n, d] = (v.avg_frame_rate || v.r_frame_rate || '25/1').split('/').map(Number);
-  const fps = d ? n / d : 25;
+  const rate = (v.avg_frame_rate || v.r_frame_rate || '25/1').split('/').map(Number);
+  const fps = rate[1] ? rate[0] / rate[1] : 25;
+  // fps racional CANÓNICO cuando ffprobe lo reporta como fracción utilizable
+  // (p.ej. 30000/1001); el float `fps` queda solo como frontera de visualización.
+  const rational = rate[1] > 0 && rate[0] > 0 ? { fpsNumerator: rate[0], fpsDenominator: rate[1] } : {};
   return {
     path: file, hash: await sha256File(file),
     durationSec: Number(j.format?.duration ?? 0), width: v.width ?? 1080, height: v.height ?? 1920,
     fps: Math.round(fps * 1000) / 1000, hasAudio: !!a, sizeBytes: Number(j.format?.size ?? 0),
+    ...(v.codec_name ? { codec: v.codec_name } : {}),
+    ...rational,
   };
 }
 
