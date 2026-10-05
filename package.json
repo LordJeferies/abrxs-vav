@@ -17,6 +17,7 @@
     "start": "npm run start -w @abraxas/service",
     "contracts:generate": "node --import tsx scripts/generate-contracts.ts",
     "doctor": "node --import tsx scripts/doctor.ts",
+    "test:media": "vitest run tests/media.test.ts",
     "test:ui": "node scripts/ui-smoke.mjs"
   },
   "devDependencies": {
