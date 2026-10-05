@@ -55,6 +55,34 @@
 - `SourceSegment[]` multi-segmento sobre Piece (nota de migración 2 de CONTRACTS_V2_SPEC).
 - Doctor FFmpeg profundo, streaming SHA, filmstrip real (media hardening, otro agente).
 
+## REAL (media hardening B — rama `agent/zcode/53flash-media-hardening-b` → `dev/0.5.1-media-core`)
+
+- **SHA256 streaming** (`sha256File` en `apps/service/src/media.ts`): `createReadStream`
+  con chunks de 1 MiB → memoria ~constante aunque el máster pese GB. Errores claros
+  (ENOENT incluido). Antes: `readFile` completo en RAM. Tests: multi-chunk de 8 MB vs
+  referencia, archivo vacío (digest conocido), error de archivo inexistente.
+- **Filmstrip uniforme** (`makeFilmstrip`): captura EXACTAMENTE N thumbnails repartidos
+  por TODA la duración (midpoint de cada segmento duration/N, `planThumbnailTimestamps`
+  pura y testeable) — un seek por thumbnail, memoria ~constante, válido para 23.976…60
+  fps sin hardcodear "frames cada X". Antes: `select='not(mod(n,50))'` solo muestreaba
+  los primeros ~40 s de un máster de 2 h. Retry al final real si el seek cae fuera.
+- **Paths hostiles** (espacios, acentos, unicode, `()[]:,'`): `execFile` ya era argv puro
+  (sin shell); el único punto crítico era el path dentro de `subtitles=` en el
+  filtergraph. `escapeFilterPath` implementa el **doble backslash-escape de dos niveles
+  de la documentación oficial de FFmpeg** (verificado empíricamente con ffmpeg 9 — las
+  variantes con comillas NO sobreviven el parser del grafo). Tests con nombres tipo
+  `Vídeos José (López) & [prueba], con: colón/episodio 01 – versión 'final' [v2].mp4` y
+  `Client's subs [v2], ep:01.srt` sobre probe/filmstrip/cutPiece/renderFinal real.
+- **Doctor media** (`scripts/doctor-media.ts`, integrado en `npm run doctor`): ffmpeg y
+  ffprobe (encontrados + versión), directorio temp escribible, espacio libre (WARN <5 GB),
+  decodificación real de video sintético (testsrc2→ffprobe), encode H264 con fixture real
+  (libx264, fallback h264_videotoolbox), VideoToolbox como INFO en macOS (nunca requisito
+  cross-platform). Sin FFmpeg → FAIL/SKIP honestos, nunca crash. PENDIENTE: fonts,
+  MLX/Whisper, providers AI, ComfyUI, DaVinci/CapCut (fuera de alcance de esta tarea).
+- **`npm run test:media`** (`tests/media.test.ts`): fixtures sintéticos con FFmpeg
+  (testsrc2+sine), gated a la presencia de ffmpeg (CI sin ffmpeg corre solo las partes
+  puras). Suite total en esta rama: 45/45.
+
 ## REAL (0.5.0 — hito Visual Studio + modularidad + coach)
 
 - Prompt Studio (`packages/prompts`): catálogos de cine + motor enhance con sujeto
