@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { readFile, writeFile } from 'node:fs/promises';
-import { graphSchema, jobSchema, projectSchema, operationSchema } from '@abraxas/contracts';
+import { graphSchema, jobSchema, projectSchema, operationSchema, pieceSchema, mediaSourceSchema } from '@abraxas/contracts';
 const schemas={
- 'production-graph.v2':graphSchema,'job.v2':jobSchema,'project.v1':projectSchema,'operation.v1':operationSchema
+ 'production-graph.v2':graphSchema,'job.v2':jobSchema,'project.v1':projectSchema,'operation.v1':operationSchema,
+ 'piece.v1':pieceSchema,'media-source.v1':mediaSourceSchema
 };
 for(const [name,schema] of Object.entries(schemas)){
  const json=z.toJSONSchema(schema);const value=JSON.stringify({...json,$id:`https://abraxas.local/schemas/${name}.json`},null,2)+'\n';
