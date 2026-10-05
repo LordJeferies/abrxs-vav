@@ -45,6 +45,8 @@ independiente y escribe sobre el mismo grafo.
 | Asistente en la PWA que guía qué hacer para terminar un video | ✅ asistente local del sitio + coach en desktop | extender KB con los planes del coach |
 | Higgsfield (workflows async/poll, soul-styles, prompt alchemy) | ✅ capas 1-2 (Studio + providers) | docs/HIGGSFIELD_INTEGRATION.md — validar con key real del usuario |
 | Motion graphics estilo Remotion (imágenes en capas → animaciones) | ✅ packages/motion + /api/motion (rangos del editor) + job motion.render | docs/REMOTION_INTEGRATION.md — los 4 tutoriales codificados; bundle Remotion y Studio de props = paso 7 |
+| Client Profiles + resolución System→Client→Project + import TXT + AI Package | ✅ /api/clients + /api/config/resolve + contracts v2.4 | docs/DRESSER_RUNTIME.md §2-3 — UI wizard de clientes pendiente |
+| QA engine | ✅ estructural (/api/qa/analyze) | QA de píxeles con media real → paso 5 |
 | Editor de escenas del guion / cinema studio / short studio completos | ⏳ paso 5 (Dresser MVP) | el wizard de Visual Studio es su fundamento |
 
 ## D. Cómo continuar el desarrollo (para cualquier IA)

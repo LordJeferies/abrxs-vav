@@ -51,6 +51,12 @@ const tools = [
   { name: 'vav_motion_compose', description: 'Motion Composer: capas (imágenes/texto con motion canon R6) → composición determinista estilo Remotion. Crea evento kind=motion en el grafo (CAS) y encola motion.render; devuelve RenderSpec + comandos FFmpeg por capa.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, startFrame: { type: 'number', description: 'rango del editor: frame de inicio de la sección (default 0)' }, composition: { type: 'object', description: '{id,fps,width,height,durationFrames,layers:[{id,assetUri,kind,startFrame,endFrame,motion,origin,scaleFrom,scaleTo,opacity,z,text,fontSize}]}' } }, required: ['projectId', 'revision', 'composition'] } },
   { name: 'vav_motion_list', description: 'Lista las composiciones motion del proyecto (eventos kind=motion con su spec de capas).', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
   { name: 'vav_motion_render', description: 'Re-renderiza composiciones motion existentes: encola job motion.render sobre la revisión actual del proyecto.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' } }, required: ['projectId', 'revision'] } },
+  { name: 'vav_clients_list', description: 'Lista los perfiles de cliente (marca, fuentes, reglas, prioridades de fuente).', inputSchema: { type: 'object', additionalProperties: false } },
+  { name: 'vav_clients_get', description: 'Lee un perfil de cliente completo.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' } }, required: ['id'] } },
+  { name: 'vav_clients_import_txt', description: 'Parsea un TXT desordenado del cliente → hechos con confianza + diff SIN aplicar (aplica con vav_clients_ai_import apply:true tras revisar).', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, rawTxt: { type: 'string' } }, required: ['id', 'rawTxt'] } },
+  { name: 'vav_clients_ai_import', description: 'Importa respuesta de IA en formato ABRXS CLIENT PROFILE v1 con diff; apply:true aplica.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string' }, responseTxt: { type: 'string' }, apply: { type: 'boolean' } }, required: ['id', 'responseTxt'] } },
+  { name: 'vav_config_resolve', description: 'Config resuelta System→Client→Project→Video→Event: cada valor con su fuente (View Resolved Config).', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string', description: 'clientId' } } } },
+  { name: 'vav_qa_analyze', description: 'QA estructural del grafo: colisiones de captions, solapes XR/A-roll, huecos, familias/SFX/tratamientos desconocidos, recetas incompletas.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string', description: 'projectId' } }, required: ['id'] } },
   { name: 'vav_smoke', description: 'Prueba E2E del core: crea un proyecto temporal, valida, hace undo/redo y limpia. Útil para verificar la app por código.', inputSchema: { type: 'object', additionalProperties: false } }
 ];
 
@@ -78,6 +84,12 @@ async function callTool(name, args) {
     case 'vav_motion_compose': return api('vav.motion.compose', args);
     case 'vav_motion_list': return api('vav.motion.list', args);
     case 'vav_motion_render': return api('vav.jobs.create', { projectId: args.projectId, revision: args.revision, kind: 'motion.render' });
+    case 'vav_clients_list': return api('vav.clients.list');
+    case 'vav_clients_get': return api('vav.clients.get', args);
+    case 'vav_clients_import_txt': return api('vav.clients.import_txt', args);
+    case 'vav_clients_ai_import': return api('vav.clients.ai_import', args);
+    case 'vav_config_resolve': return api('vav.config.resolve', args);
+    case 'vav_qa_analyze': return api('vav.qa.analyze', args);
     case 'vav_smoke': {
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');
       const project = await api('vav.projects.create', { name: `SMOKE_${stamp}`, timebase: { fpsNumerator: 30000, fpsDenominator: 1001 } }, { internal: true });

@@ -28,7 +28,14 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.coach.plan', module:'delivery', summary:'Modo coach: plan de montaje paso a paso (qué/cómo/por qué por timecode) compilado del grafo para CapCut/DaVinci.', method:'GET', path:'/api/coach/plan?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' },
   { name:'vav.motion.compose', module:'visual-lab', summary:'Motion Composer: capas (imágenes/texto) → composición determinista estilo Remotion (keyframes canon, zoom ≤1.18) + comandos FFmpeg por capa.', method:'POST', path:'/api/motion', destructive:false, requiresOpenProject:true, since:'0.5.0' },
   { name:'vav.motion.list', module:'visual-lab', summary:'Composiciones motion del proyecto (eventos kind=motion con su spec).', method:'GET', path:'/api/motion?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' },
-  { name:'vav.motion.render', module:'visual-lab', summary:'Re-renderiza una composición motion existente (job motion.render sobre la revisión actual).', method:'POST', path:'/api/jobs', destructive:false, requiresOpenProject:true, since:'0.5.0' }
+  { name:'vav.motion.render', module:'visual-lab', summary:'Re-renderiza una composición motion existente (job motion.render sobre la revisión actual).', method:'POST', path:'/api/jobs', destructive:false, requiresOpenProject:true, since:'0.5.0' },
+  { name:'vav.clients.list', module:'clients', summary:'Lista los perfiles de cliente.', method:'GET', path:'/api/clients', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.clients.create', module:'clients', summary:'Crea un cliente (opcionalmente importa su TXT con hechos+confianza).', method:'POST', path:'/api/clients', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.clients.get', module:'clients', summary:'Lee un perfil de cliente completo.', method:'GET', path:'/api/clients/:id', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.clients.import_txt', module:'clients', summary:'Parsea un TXT del cliente → draft con confianza + diff. No aplica sin confirmación.', method:'POST', path:'/api/clients/:id/import_txt', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.clients.ai_import', module:'clients', summary:'Importa la respuesta de IA (ABRXS CLIENT PROFILE v1) con diff; apply:true para aplicar.', method:'POST', path:'/api/clients/:id/ai_import', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.config.resolve', module:'clients', summary:'Config resuelta System→Client→Project→Video→Event (cada valor con su fuente).', method:'GET', path:'/api/config/resolve?client=:id', destructive:false, requiresOpenProject:false, since:'0.5.0' },
+  { name:'vav.qa.analyze', module:'review', summary:'QA estructural del grafo: colisiones, solapes, huecos, referencias desconocidas.', method:'GET', path:'/api/qa/analyze?projectId=:id', destructive:false, requiresOpenProject:true, since:'0.5.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */

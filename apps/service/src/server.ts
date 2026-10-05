@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { ProjectStore, JobEngine, ConflictError, NotFoundError } from '@abraxas/core';
-import { projectSchema, jobSchema, projectContentSchema, timebaseSchema } from '@abraxas/contracts';
+import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema } from '@abraxas/contracts';
 import { FileRepository } from './file-repository';
 import { handlers } from './handlers';
 import { catalog } from './catalog';
@@ -13,6 +13,8 @@ import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/promp
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
 import { compileComposition } from '@abraxas/motion';
+import { ClientStore, parseClientTxt, applyDraft, exportAIPackage, importAIResponse, diffProfile, resolveConfig } from './clients';
+import { analyzeGraph } from './qa';
 import { buildCoachPlan } from './coach';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
@@ -22,6 +24,7 @@ const dist=join(root,'apps/desktop/dist');
 const projectRepository=new FileRepository(join(dataDirectory,'projects'),projectSchema);
 const jobRepository=new FileRepository(join(dataDirectory,'jobs'),jobSchema);
 const store=new ProjectStore(projectRepository);
+const clientStore=new ClientStore(join(dataDirectory,'clients'));
 const engine=new JobEngine(jobRepository,handlers,value=>createHash('sha256').update(value).digest('hex'),{
   defaultWatchdogMs:Number(process.env.ABRAXAS_JOB_WATCHDOG_MS||900_000) // 15 min por defecto
 });
@@ -99,6 +102,27 @@ const server=createServer(async(req,res)=>{
         if(req.method==='POST'&&id==='test'&&!action){const input=z.strictObject({provider:z.string().min(1)}).parse(await body(req));send(res,200,await testConnection(input.provider));return;}
       }
       if(resource==='registries'&&req.method==='GET'&&!id){send(res,200,{registries});return;}
+      if(resource==='clients'){
+        if(req.method==='GET'&&!id){send(res,200,await clientStore.list());return;}
+        if(req.method==='POST'&&!id&&!action){const input=z.strictObject({name:z.string().min(1),rawTxt:z.string().default('')}).parse(await body(req));let profile=await clientStore.put(clientProfileSchema.parse({schemaVersion:'abrxs.client-profile.v1',clientId:input.name.toLowerCase().replace(/[^a-z0-9]+/g,'-'),name:input.name}));if(input.rawTxt){const draft=parseClientTxt(input.rawTxt,profile.clientId);profile=await clientStore.put(applyDraft(profile,draft));}send(res,201,profile);return;}
+        if(req.method==='GET'&&id&&!action){const c=await clientStore.get(id);if(!c)throw new NotFoundError('Cliente no encontrado.');send(res,200,c);return;}
+        if(req.method==='POST'&&id&&action==='import_txt'){const input=z.strictObject({rawTxt:z.string().min(1)}).parse(await body(req));const before=await clientStore.get(id);if(!before)throw new NotFoundError('Cliente no encontrado.');const draft=parseClientTxt(input.rawTxt,id);const after=applyDraft(before,draft);send(res,200,{draft,diff:diffProfile(before,after)});return;}
+        if(req.method==='POST'&&id&&action==='apply_draft'){const input=z.strictObject({profile:clientProfileSchema}).parse(await body(req));const saved=await clientStore.put(input.profile);send(res,200,{profile:saved});return;}
+        if(req.method==='POST'&&id&&action==='ai_package'){const input=z.strictObject({rawTxt:z.string().default(''),responseTxt:z.string().default('')}).parse(await body(req));const profile=await clientStore.get(id);const draft=parseClientTxt(input.rawTxt,id);if(input.responseTxt){const aiDraft=importAIResponse(input.responseTxt);const after=applyDraft(profile,draft);send(res,200,{package:exportAIPackage(profile,{...draft,raw:input.rawTxt||aiDraft.raw},{presets:{captions:'caption.amanda.vertical.v1', broll:'documentary_clean'},visualTypes:'ver /api/registries'}),importedDraft:aiDraft,diff:diffProfile(profile,after)});return;}send(res,200,{package:exportAIPackage(profile,draft,{presets:{},visualTypes:'ver /api/registries'})});return;}
+        if(req.method==='POST'&&id&&action==='ai_import'){const input=z.strictObject({responseTxt:z.string().min(1),apply:z.boolean().default(false)}).parse(await body(req));const before=await clientStore.get(id);if(!before)throw new NotFoundError('Cliente no encontrado.');const aiDraft=importAIResponse(input.responseTxt);const after=applyDraft(before,aiDraft);const diff=diffProfile(before,after);if(input.apply)await clientStore.put(after);send(res,200,{diff,applied:input.apply,profile:input.apply?after:undefined});return;}
+      }
+      if(resource==='config'&&id==='resolve'&&req.method==='GET'){
+        const client=url.searchParams.get('client');
+        let overrides:Record<string,unknown>={};
+        const pid=url.searchParams.get('projectId');
+        let projectName:string|null=null;
+        if(pid){const proj=await store.get(pid);projectName=proj.content.name;}
+        const c=client?await clientStore.get(client):null;
+        const resolved=resolveConfig({client:c,projectOverrides:overrides});
+        send(res,200,{...resolved,projectName});return;}
+      if(resource==='qa'&&id==='analyze'&&req.method==='GET'){
+        const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');
+        send(res,200,analyzeGraph(await store.get(pid)));return;}
       if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
       send(res,404,{error:'Ruta no encontrada.'});return;
     }
@@ -113,7 +137,7 @@ const server=createServer(async(req,res)=>{
 async function main(){
   const release=await lock();
   try{
-    await projectRepository.init();await jobRepository.init();await store.list();await engine.recover();
+    await projectRepository.init();await jobRepository.init();await clientStore.init();await store.list();await engine.recover();
     server.on('error',async error=>{console.error(error.message);await engine.stop();await release();process.exit(1);});
     server.listen(port,'127.0.0.1',()=>console.log(`AbrxsVAV: http://127.0.0.1:${port} · datos ${dataDirectory}`));
     for(const signal of ['SIGINT','SIGTERM'] as const)process.once(signal,()=>{void engine.stop().then(()=>new Promise<void>(r=>server.close(()=>r()))).then(release).then(()=>process.exit(0));});

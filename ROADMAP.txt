@@ -55,7 +55,11 @@
         Registries modulares (XR/SFX/motion/captions/packs/tratamientos) ·
         Modo Coach (paso a paso CapCut/DaVinci) · Motion Composer estilo Remotion
         (capas con imágenes → keyframes deterministas zoom≤1.18 + FFmpeg zoompan,
-        por secciones del editor, E2E verificado; 26/26 tests; MCP a 21 tools).
+        por secciones del editor, E2E verificado) · CLIENT PROFILES con cadena de
+        resolución System→Client→Project→Event + tokens de marca + import TXT con
+        confianza + AI Package roundtrip (8 archivos, diff antes de aplicar) ·
+        QA estructural del grafo (/api/qa/analyze) · INSTALL_MAC.command (instalar/
+        ejecutar con doble clic) · 32/32 tests · MCP a 28 tools.
   [ ] PASO 2 — CANTER ADAPTER  ← ← ← SIGUIENTE ACCIÓN
         Adapter al motor 3.8.1 · Whisper word-level · MediaService por rangos ·
         confirmación manual de límites. Requiere máster real de podcast del usuario.

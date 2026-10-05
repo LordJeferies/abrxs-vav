@@ -145,3 +145,37 @@ export const actionDefinitionSchema = z.strictObject({
   since: z.string()
 });
 export type ActionDefinition = z.infer<typeof actionDefinitionSchema>;
+
+/* ═══ ABRXSVAV v2.4 — CLIENT PROFILES + config resuelta (Dresser runtime) ═══
+   Cadena de resolución: SYSTEM → CLIENT → PROJECT → VIDEO → EVENT (gana la más
+   específica). Tokens de marca ($colors.accent) para que cambiar un color no toque
+   presets. Fuente: análisis modular de Dresser (docs/DRESSER_RUNTIME.md). */
+
+export const sourcePrioritySchema = z.array(z.enum(['client','frame_grab','stock','ai_image','ai_video'])).default(['client','frame_grab','stock','ai_image','ai_video']);
+export const clientProfileSchema = z.strictObject({
+  schemaVersion: z.literal('abrxs.client-profile.v1'),
+  clientId: z.string().min(1),
+  name: z.string().min(1),
+  brand: z.strictObject({
+    colors: z.record(z.string(), z.string()).default({}),        // primary/accent/text…
+    fonts: z.record(z.string(), z.string()).default({})          // primary→font.montserrat
+  }).prefault({}),
+  captions: z.strictObject({ preset: z.string().default('caption.amanda.vertical.v1'), highlightColor: z.string().default('$colors.accent') }).prefault({}),
+  broll: z.strictObject({ preset: z.string().default('documentary_clean'), density: z.enum(['low','medium','high']).default('medium'), sourcePriority: sourcePrioritySchema }).prefault({}),
+  xroll: z.strictObject({ density: z.enum(['off','low','medium']).default('low'), allowed: z.array(z.string()).default([]) }).prefault({}),
+  sfx: z.strictObject({ preset: z.string().default('subtle') }).prefault({}),
+  glossary: z.array(z.strictObject({ term: z.string(), canonical: z.string().optional(), dontTranslate: z.boolean().default(false) })).default([]),
+  negativeRules: z.array(z.string()).default([]),                // "no estética futurista"
+  editorialRules: z.array(z.string()).default([]),               // "no B-roll en los primeros 3s"
+  platformProfiles: z.record(z.string(), z.record(z.string(), z.unknown())).default({}), // instagram: {captionDensity:'high'}
+  createdAt: z.string().optional(), updatedAt: z.string().optional()
+});
+export type ClientProfile = z.infer<typeof clientProfileSchema>;
+
+/** Entrada de la config resuelta: cada valor sabe DE DÓNDE vino (View Resolved Config). */
+export const resolvedEntrySchema = z.strictObject({ key: z.string(), value: z.unknown(), source: z.enum(['system','client','project','video','event']) });
+export type ResolvedEntry = z.infer<typeof resolvedEntrySchema>;
+export const resolvedConfigSchema = z.strictObject({
+  clientId: z.string().nullable(), entries: z.array(resolvedEntrySchema)
+});
+export type ResolvedConfig = z.infer<typeof resolvedConfigSchema>;

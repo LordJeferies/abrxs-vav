@@ -45,6 +45,19 @@
 - Registry `treatment-presets` (9 tratamientos de los videos: halftone, film
   treatment, time-boil 12fps, screen-blend smoke, glass panel/light, weld&detach,
   floor shadow, lamp swing). MCP a 21 tools (+motion_compose/list/render).
+- **Client Profiles + config resuelta** (contracts v2.4 + apps/service/clients.ts):
+  cadena System→Client→Project→Video→Event con fuente por valor (vav_config_resolve),
+  tokens de marca ($colors.*), sourcePriority/negativeRules/editorialRules/glossary,
+  import TXT determinista con confianza (high/medium), AI Package System (8 archivos
+  para IA externa) e import del formato ABRXS CLIENT PROFILE v1 con diff antes de
+  aplicar. 6 tests propios.
+- **QA estructural** (/api/qa/analyze + vav_qa_analyze): solapes A-roll/XR, colisiones
+  de captions, huecos, familias/SFX/tratamientos desconocidos, recetas incompletas.
+- **INSTALL_MAC.command**: instalación/arranque con doble clic (npm ci + build +
+  service + abre el navegador). MCP a 28 tools (+clients×5, config_resolve, qa).
+- docs/DRESSER_RUNTIME.md: arquitectura modular consolidada del análisis de Dresser
+  (runtime de acabado audiovisual, cadena de resolución, niveles de plugin, QA,
+  media intelligence pendiente → paso 2).
 
 ## AbrxsVAV 0.4.0 · 2026-10-04 (paso 1 del plan de 11)
 

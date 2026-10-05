@@ -34,6 +34,16 @@ REVIEW · DELIVERY · CLIENTS · LIBRARY · ACTIVITY
 | Qué se copia de cada repo (licencias, provenance) | `docs/SOURCES_AND_REUSE.md` |
 | Estado real: REAL / MOCK / PENDIENTE | `docs/IMPLEMENTATION_STATUS.md` |
 
+## Instalar y ejecutar (macOS)
+
+```bash
+git clone https://github.com/LordJeferies/abrxs-vav.git && cd abrxs-vav
+./INSTALL_MAC.command     # instala deps, compila y abre http://127.0.0.1:4317
+```
+
+O manual: `npm ci && npm run dev` (UI en http://127.0.0.1:1420). Requisitos: Node 22+,
+FFmpeg (el Doctor lo verifica). Todo local: tus videos no salen de tu Mac.
+
 ## Probar
 
 Node 22 o superior (recomendado Node 24). Desde esta carpeta:
