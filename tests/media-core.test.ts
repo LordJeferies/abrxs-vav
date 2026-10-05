@@ -108,9 +108,11 @@ describe('Job target + payload (v2.5, compatible con jobs v2 existentes)',()=>{
     const store=new ProjectStore(repo);const project=await store.create('Target Test',TB);
     const engine=new JobEngine(jobs,{'project.validate':handlers['project.validate']},value=>createHash('sha256').update(value).digest('hex'));
     engines.push(engine);
-    const job=await engine.enqueue(project,'project.validate');
-    // Simula un job creado por la versión anterior: mismo fingerprint legacy, sin target/payload.
-    const legacyJob=jobSchema.parse({...job,id:crypto.randomUUID(),inputFingerprint:createHash('sha256').update(JSON.stringify({kind:'project.validate',revision:project.revision,content:project.content})).digest('hex'),target:undefined,payload:undefined});
+    // Job EXACTAMENTE como lo habría persistido la versión pre-0.5.1: fingerprint legacy
+    // ({kind,revision,content}) y sin target/payload. ÚNICO job del store → determinista.
+    const legacyFingerprint=createHash('sha256').update(JSON.stringify({kind:'project.validate',revision:project.revision,content:project.content})).digest('hex');
+    const timestamp=new Date().toISOString();
+    const legacyJob=jobSchema.parse({schemaVersion:'abraxas.job.v2',id:crypto.randomUUID(),projectId:project.id,kind:'project.validate',handler:'project.validate',status:'completed',inputFingerprint:legacyFingerprint,input:project.content,sourceRevision:project.revision,progress:1,attempt:1,maxAttempts:3,createdAt:timestamp,updatedAt:timestamp});
     await jobs.put(legacyJob.id,legacyJob);
     const reEnqueued=await engine.enqueue(project,'project.validate');
     expect(reEnqueued.id).toBe(legacyJob.id); // reconocido: NO se re-ejecuta

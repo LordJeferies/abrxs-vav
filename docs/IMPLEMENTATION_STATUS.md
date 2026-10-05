@@ -53,7 +53,9 @@
   dresser.render_piece + rutas + MCP +4 tools + tests de parseSrt/keywords/E2E. Al aterrizar,
   debe usar `Piece`/`MediaSource`/`target` de este hito (frames canónicos, no segundos).
 - `SourceSegment[]` multi-segmento sobre Piece (nota de migración 2 de CONTRACTS_V2_SPEC).
-- Doctor FFmpeg profundo, streaming SHA, filmstrip real (media hardening, otro agente).
+- Streaming SHA, filmstrip uniforme y Doctor media básico ya son REAL (ver media hardening B,
+  sección siguiente); queda PENDIENTE el diagnóstico FFmpeg profundo (fonts, MLX/Whisper,
+  hw-encoder matrix) y el wire de media.ts.
 
 ## REAL (media hardening B — rama `agent/zcode/53flash-media-hardening-b` → `dev/0.5.1-media-core`)
 
@@ -83,7 +85,7 @@
   PENDIENTE: fonts, MLX/Whisper, providers AI, ComfyUI, DaVinci/CapCut (fuera de alcance).
 - **`npm run test:media`** (`tests/media.test.ts`): fixtures sintéticos con FFmpeg
   (testsrc2+sine), gated a la presencia de ffmpeg (CI sin ffmpeg corre solo las partes
-  puras). Suite total en esta rama: 45/45.
+  puras). Suite combinada tras integrar Core A: 89/89 (16 de ellos en test:media).
 
 ## REAL (0.5.0 — hito Visual Studio + modularidad + coach)
 
