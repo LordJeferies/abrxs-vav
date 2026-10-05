@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "abraxas.client-profile.v1",
+  "clientId": "joc",
+  "name": "JOC",
+  "brand": {
+    "colors": {
+      "primary": "#111111",
+      "accent": "#D5A23B",
+      "text": "#FFFFFF"
+    }
+  },
+  "fonts": {
+    "primary": "brand.primary",
+    "secondary": "brand.secondary"
+  },
+  "glossary": [
+    "Joc López",
+    "CRM",
+    "valor percibido",
+    "criterio de decisión"
+  ],
+  "visualRules": {
+    "broll": "editorial/cinematic",
+    "xrollDensity": "medium",
+    "captionPolicy": "project-dependent"
+  },
+  "negativeRules": [
+    "avoid random neon aesthetics",
+    "do not add fake text inside AI images"
+  ],
+  "sourcePriority": [
+    "client",
+    "source",
+    "stock",
+    "ai_image",
+    "ai_video"
+  ]
+}

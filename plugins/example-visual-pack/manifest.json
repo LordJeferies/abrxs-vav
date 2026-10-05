@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "abraxas.plugin-manifest.v1",
+  "id": "abraxas.xr.editorial-stat",
+  "version": "0.1.0",
+  "category": "visual",
+  "capabilities": [
+    "visual.layers",
+    "motion.scale",
+    "motion.position",
+    "brand.tokens",
+    "caption.auto"
+  ],
+  "permissions": {
+    "network": false,
+    "filesystem": "assets-only"
+  },
+  "entry": "README.md"
+}

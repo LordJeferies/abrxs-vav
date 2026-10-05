@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Export Profile",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "outputs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "abraxas.export-profile.v1"
+    },
+    "id": {
+      "type": "string"
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "final_mp4",
+          "clean_mp4",
+          "broll_assets",
+          "xroll_assets",
+          "srt",
+          "ass",
+          "word_json",
+          "animated_captions_alpha",
+          "sfx",
+          "davinci_package",
+          "davinci_mcp_plan",
+          "capcut_kit",
+          "project_archive"
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

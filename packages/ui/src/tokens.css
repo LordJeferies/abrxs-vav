@@ -1,0 +1,82 @@
+/* ═══ ABRXSVAV DESIGN TOKENS v1 — cumple docs/UI_CANON.md ═══
+   Densidad pro-tool (desktop/puntero). Touch 44px solo en PWA companion.
+   LiquidGlass SOLO en UI layer (nav, toolbars, popovers). Contenido sólido. */
+
+:root {
+  /* ── espaciado — base 4, sin valores arbitrarios ── */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── radios — familias con intención ── */
+  --radius-xs: 6px; --radius-sm: 8px; --radius-md: 12px;
+  --radius-lg: 16px; --radius-xl: 22px; --radius-pill: 999px;
+
+  /* ── controles — densidad de herramienta profesional ── */
+  --control-sm: 28px;    /* filas de timeline / listas densas */
+  --control-md: 32px;    /* botones y filas estándar          */
+  --control-lg: 40px;    /* toolbar principal                 */
+  --control-touch: 44px; /* PWA companion en iPhone           */
+
+  /* ── tipografía — system stack, nunca empaquetar SF Pro ── */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+             "Segoe UI", system-ui, sans-serif;
+  --fs-display: clamp(28px, 3vw, 36px);  /* lh 1.05–1.15, tracking -0.02em */
+  --fs-title: 22px;
+  --fs-section: 17px;
+  --fs-body: 14px;
+  --fs-secondary: 13px;
+  --fs-meta: 12px;
+  --fs-micro: 11px;      /* uppercase, tracking +0.04em */
+  --lh-heading: 1.15;
+  --lh-body: 1.5;
+
+  /* ── motion — interrumpible, easings únicos, nada de 500ms globales ── */
+  --dur-fast: 120ms;
+  --dur-normal: 200ms;
+  --dur-emphasized: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+  /* ── sombras — ambient + contact, distintas por nivel ── */
+  --shadow-card:
+    0 1px 2px rgb(0 0 0 / 0.24),
+    0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-floating:
+    0 8px 24px rgb(0 0 0 / 0.36),
+    0 1px 2px rgb(0 0 0 / 0.28),
+    0 0 0 1px rgb(255 255 255 / 0.06);
+  --shadow-modal:
+    0 24px 64px rgb(0 0 0 / 0.48),
+    0 0 0 1px rgb(255 255 255 / 0.08);
+
+  /* ── superficies — niveles 0..4 ── */
+  --level-0: #0d0f12;
+  --level-1: #14171b;
+  --level-2: #1a1e24;
+  --level-3: #20252c;
+  --level-4: #262c35;
+
+  /* ── texto ── */
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0a8;
+  --text-tertiary: #6b7280;
+
+  /* ── bordes — 1px + alpha, nunca wireframe ── */
+  --border-subtle: rgb(255 255 255 / 0.06);
+  --border-default: rgb(255 255 255 / 0.10);
+  --border-strong: rgb(255 255 255 / 0.18);
+
+  /* ── color semántico — jamás hardcodear en componentes ── */
+  --color-accent: #4f8ef7;
+  --color-accent-soft: rgb(79 142 247 / 0.16);
+  --color-success: #34c77b;
+  --color-warning: #e8b341;
+  --color-danger: #e5534b;
+  --color-info: #58a6ff;
+
+  /* ── iconografía — set único, escala fija ── */
+  --icon-micro: 14px; --icon-compact: 16px; --icon-normal: 18px;
+  --icon-strong: 20px; --icon-main: 24px;
+}

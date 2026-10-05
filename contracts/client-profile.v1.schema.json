@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Client Profile",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "clientId",
+    "name"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "abraxas.client-profile.v1"
+    },
+    "clientId": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "brand": {
+      "type": "object"
+    },
+    "fonts": {
+      "type": "object"
+    },
+    "glossary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "visualRules": {
+      "type": "object"
+    },
+    "negativeRules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sourcePriority": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

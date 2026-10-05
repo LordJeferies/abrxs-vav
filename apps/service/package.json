@@ -1,0 +1,15 @@
+{
+  "name": "@abraxas/service",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --import tsx --watch src/server.ts",
+    "start": "node --import tsx src/server.ts"
+  },
+  "dependencies": {
+    "@abraxas/core": "0.2.0",
+    "@abraxas/contracts": "0.2.0",
+    "zod": "^4.4.3"
+  }
+}

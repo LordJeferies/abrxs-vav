@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "abraxas.project.v1",
+  "id": "aaf23143-203c-42ce-baa5-3c1a911fedc8",
+  "revision": 0,
+  "createdAt": "2026-10-02T20:00:00.000Z",
+  "updatedAt": "2026-10-02T20:00:00.000Z",
+  "content": {
+    "name": "JOC \u00b7 Fixture",
+    "graph": {
+      "schemaVersion": "abraxas.production-graph.v2",
+      "projectId": "aaf23143-203c-42ce-baa5-3c1a911fedc8",
+      "timebase": {
+        "fpsNumerator": 30000,
+        "fpsDenominator": 1001
+      },
+      "events": [
+        {
+          "id": "A01",
+          "kind": "a_roll",
+          "startFrame": 0,
+          "endFrame": 1800,
+          "status": "approved",
+          "assetRefs": [
+            "master"
+          ]
+        },
+        {
+          "id": "BR03",
+          "kind": "b_roll",
+          "startFrame": 440,
+          "endFrame": 615,
+          "status": "planned",
+          "visualTypeId": "broll.editorial-photo.v1",
+          "assetRefs": [],
+          "extensions": {
+            "abraxas.broll.editorial-photo@1": {
+              "motion": "push_in_soft"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "history": {
+    "undo": [],
+    "redo": []
+  }
+}

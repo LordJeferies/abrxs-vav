@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Asset Manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "kind",
+    "path",
+    "sha256",
+    "origin"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "abraxas.asset-manifest.v1"
+    },
+    "id": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "video",
+        "image",
+        "audio",
+        "font",
+        "document",
+        "overlay",
+        "project"
+      ]
+    },
+    "path": {
+      "type": "string"
+    },
+    "sha256": {
+      "type": "string"
+    },
+    "origin": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "client",
+            "source",
+            "stock",
+            "generated",
+            "rendered",
+            "imported"
+          ]
+        },
+        "provider": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "sourceUrl": {
+          "type": "string"
+        },
+        "license": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "seed": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

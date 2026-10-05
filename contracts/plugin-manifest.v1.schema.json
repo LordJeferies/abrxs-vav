@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Plugin Manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "version",
+    "category",
+    "capabilities"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "abraxas.plugin-manifest.v1"
+    },
+    "id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "category": {
+      "enum": [
+        "visual",
+        "caption",
+        "sfx",
+        "motion",
+        "treatment",
+        "provider",
+        "renderer",
+        "exporter",
+        "analyzer",
+        "workflow-node"
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "permissions": {
+      "type": "object"
+    },
+    "entry": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

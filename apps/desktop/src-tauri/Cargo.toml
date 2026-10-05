@@ -1,0 +1,16 @@
+[package]
+name="abraxas-os-foundation"
+version="0.1.0"
+description="AbrxsVAV — video · audio · visual production OS (familia Abraxas)"
+authors=["LordJeferies · Abraxas"]
+edition="2021"
+[lib]
+name="abraxas_os_foundation_lib"
+crate-type=["staticlib","cdylib","rlib"]
+
+[build-dependencies]
+tauri-build={version="2",features=[]}
+[dependencies]
+tauri={version="2",features=[]}
+serde={version="1",features=["derive"]}
+serde_json="1"

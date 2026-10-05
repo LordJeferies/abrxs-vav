@@ -1,0 +1,34 @@
+{
+  "name": "abrxs-vav",
+  "private": true,
+  "version": "0.3.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n service,ui \"npm run dev -w @abraxas/service\" \"npm run dev -w @abraxas/desktop\"",
+    "build": "npm run build -w @abraxas/desktop",
+    "test": "vitest run",
+    "check": "npm run check -w @abraxas/desktop && tsc -p apps/service/tsconfig.json && node scripts/validate-contracts.mjs && node --import tsx scripts/generate-contracts.ts --check",
+    "tauri:dev": "npm run tauri:dev -w @abraxas/desktop",
+    "tauri:build": "npm run tauri:build -w @abraxas/desktop",
+    "smoke": "node scripts/smoke.mjs",
+    "start": "npm run start -w @abraxas/service",
+    "contracts:generate": "node --import tsx scripts/generate-contracts.ts",
+    "doctor": "node --import tsx scripts/doctor.ts",
+    "test:ui": "node scripts/ui-smoke.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "ajv": "^8.20.0",
+    "concurrently": "^9.2.1",
+    "playwright": "1.55.1",
+    "tsx": "^4.20.6",
+    "vitest": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module"
+}

@@ -1,0 +1,774 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "abraxas.project.v1"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "createdAt": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string"
+    },
+    "content": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "graph": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "string",
+              "const": "abraxas.production-graph.v2"
+            },
+            "projectId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "timebase": {
+              "type": "object",
+              "properties": {
+                "fpsNumerator": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "fpsDenominator": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "fpsNumerator",
+                "fpsDenominator"
+              ],
+              "additionalProperties": false
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "a_roll",
+                      "b_roll",
+                      "xr",
+                      "image",
+                      "motion",
+                      "sfx",
+                      "music",
+                      "caption",
+                      "vo",
+                      "transition",
+                      "note"
+                    ]
+                  },
+                  "startFrame": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "endFrame": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ghost",
+                      "planned",
+                      "creating",
+                      "ready",
+                      "review",
+                      "approved",
+                      "failed"
+                    ]
+                  },
+                  "visualTypeId": {
+                    "type": "string"
+                  },
+                  "assetRefs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "extensions": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "id",
+                  "kind",
+                  "startFrame",
+                  "endFrame",
+                  "status"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "projectId",
+            "timebase",
+            "events"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "graph"
+      ],
+      "additionalProperties": false
+    },
+    "history": {
+      "type": "object",
+      "properties": {
+        "undo": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string"
+              },
+              "before": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "graph": {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "string",
+                        "const": "abraxas.production-graph.v2"
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "timebase": {
+                        "type": "object",
+                        "properties": {
+                          "fpsNumerator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "fpsDenominator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "fpsNumerator",
+                          "fpsDenominator"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "events": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "a_roll",
+                                "b_roll",
+                                "xr",
+                                "image",
+                                "motion",
+                                "sfx",
+                                "music",
+                                "caption",
+                                "vo",
+                                "transition",
+                                "note"
+                              ]
+                            },
+                            "startFrame": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "endFrame": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "ghost",
+                                "planned",
+                                "creating",
+                                "ready",
+                                "review",
+                                "approved",
+                                "failed"
+                              ]
+                            },
+                            "visualTypeId": {
+                              "type": "string"
+                            },
+                            "assetRefs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "extensions": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "startFrame",
+                            "endFrame",
+                            "status"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "projectId",
+                      "timebase",
+                      "events"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "graph"
+                ],
+                "additionalProperties": false
+              },
+              "after": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "graph": {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "string",
+                        "const": "abraxas.production-graph.v2"
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "timebase": {
+                        "type": "object",
+                        "properties": {
+                          "fpsNumerator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "fpsDenominator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "fpsNumerator",
+                          "fpsDenominator"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "events": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "a_roll",
+                                "b_roll",
+                                "xr",
+                                "image",
+                                "motion",
+                                "sfx",
+                                "music",
+                                "caption",
+                                "vo",
+                                "transition",
+                                "note"
+                              ]
+                            },
+                            "startFrame": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "endFrame": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "ghost",
+                                "planned",
+                                "creating",
+                                "ready",
+                                "review",
+                                "approved",
+                                "failed"
+                              ]
+                            },
+                            "visualTypeId": {
+                              "type": "string"
+                            },
+                            "assetRefs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "extensions": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "startFrame",
+                            "endFrame",
+                            "status"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "projectId",
+                      "timebase",
+                      "events"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "graph"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "timestamp",
+              "before",
+              "after"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "redo": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "timestamp": {
+                "type": "string"
+              },
+              "before": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "graph": {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "string",
+                        "const": "abraxas.production-graph.v2"
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "timebase": {
+                        "type": "object",
+                        "properties": {
+                          "fpsNumerator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "fpsDenominator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "fpsNumerator",
+                          "fpsDenominator"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "events": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "a_roll",
+                                "b_roll",
+                                "xr",
+                                "image",
+                                "motion",
+                                "sfx",
+                                "music",
+                                "caption",
+                                "vo",
+                                "transition",
+                                "note"
+                              ]
+                            },
+                            "startFrame": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "endFrame": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "ghost",
+                                "planned",
+                                "creating",
+                                "ready",
+                                "review",
+                                "approved",
+                                "failed"
+                              ]
+                            },
+                            "visualTypeId": {
+                              "type": "string"
+                            },
+                            "assetRefs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "extensions": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "startFrame",
+                            "endFrame",
+                            "status"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "projectId",
+                      "timebase",
+                      "events"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "graph"
+                ],
+                "additionalProperties": false
+              },
+              "after": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "graph": {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "string",
+                        "const": "abraxas.production-graph.v2"
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "timebase": {
+                        "type": "object",
+                        "properties": {
+                          "fpsNumerator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "fpsDenominator": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "fpsNumerator",
+                          "fpsDenominator"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "events": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "a_roll",
+                                "b_roll",
+                                "xr",
+                                "image",
+                                "motion",
+                                "sfx",
+                                "music",
+                                "caption",
+                                "vo",
+                                "transition",
+                                "note"
+                              ]
+                            },
+                            "startFrame": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "endFrame": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "ghost",
+                                "planned",
+                                "creating",
+                                "ready",
+                                "review",
+                                "approved",
+                                "failed"
+                              ]
+                            },
+                            "visualTypeId": {
+                              "type": "string"
+                            },
+                            "assetRefs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "extensions": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "startFrame",
+                            "endFrame",
+                            "status"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "projectId",
+                      "timebase",
+                      "events"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "name",
+                  "graph"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "timestamp",
+              "before",
+              "after"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "undo",
+        "redo"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "revision",
+    "createdAt",
+    "updatedAt",
+    "content",
+    "history"
+  ],
+  "additionalProperties": false,
+  "$id": "https://abraxas.local/schemas/project.v1.json"
+}

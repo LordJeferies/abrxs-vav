@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Visual Event",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "kind",
+    "purpose",
+    "startFrame",
+    "endFrame"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "abraxas.visual-event.v1"
+    },
+    "id": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "b_roll",
+        "x_roll",
+        "motion",
+        "caption",
+        "sfx",
+        "graphic"
+      ]
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "startFrame": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "endFrame": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "anchorText": {
+      "type": "string"
+    },
+    "visualTypeId": {
+      "type": "string"
+    },
+    "materializationPolicy": {
+      "enum": [
+        "auto",
+        "local_first",
+        "stock_first",
+        "ai_image",
+        "ai_video",
+        "programmatic",
+        "browser_assisted",
+        "manual_handoff"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

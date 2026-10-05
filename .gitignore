@@ -1,0 +1,17 @@
+node_modules
+dist
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+apps/desktop/src-tauri/target
+projects/
+media/
+cache/
+releases/
+
+.abraxas-data/
+*.tsbuildinfo
+playwright-report/
+test-results/

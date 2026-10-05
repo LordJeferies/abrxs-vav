@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "abraxas.production-graph.v2",
+  "projectId": "joc-webinar-07",
+  "timebase": {
+    "fpsNumerator": 30000,
+    "fpsDenominator": 1001
+  },
+  "events": [
+    {
+      "id": "A01",
+      "kind": "a_roll",
+      "startFrame": 0,
+      "endFrame": 1800,
+      "status": "approved",
+      "assetRefs": [
+        "master"
+      ]
+    },
+    {
+      "id": "BR03",
+      "kind": "b_roll",
+      "startFrame": 440,
+      "endFrame": 615,
+      "status": "planned",
+      "visualTypeId": "broll.editorial-photo.v1",
+      "assetRefs": [],
+      "extensions": {
+        "abraxas.broll.editorial-photo@1": {
+          "motion": "push_in_soft"
+        }
+      }
+    }
+  ]
+}

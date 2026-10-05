@@ -1,0 +1,69 @@
+/* ═══ ABRXSVAV MATERIALS v1 — materiales como tokens, no como CSS repetido ═══
+   Regla del canon: LiquidGlass pertenece al UI layer (nav, toolbars, popovers,
+   inspectores, modales). El CONTENT LAYER (timeline, video, grillas) es sólido.
+   Presupuesto de blur: 2–3 superficies grandes visibles simultáneas máximo. */
+
+:root {
+  /* materiales de superficie */
+  --material-solid: var(--level-1);
+  --material-muted: var(--level-2);
+  --material-translucent: rgb(26 30 36 / 0.86);
+
+  /* glass estándar — navegación, toolbars, popovers */
+  --material-glass:
+    linear-gradient(rgb(32 37 44 / 0.55), rgb(26 30 36 / 0.62));
+  --material-glass-blur: blur(20px) saturate(180%);
+  --material-glass-border: rgb(255 255 255 / 0.08);
+  --material-glass-highlight:
+    inset 0 1px 0 rgb(255 255 255 / 0.10);
+
+  /* glass fuerte — SOLO modal (nivel 4) */
+  --material-glass-strong:
+    linear-gradient(rgb(38 44 53 / 0.72), rgb(30 35 42 / 0.78));
+  --material-glass-strong-blur: blur(28px) saturate(200%);
+}
+
+/* utilidad: glass estándar (aplicar SOLO a superficies del UI layer) */
+.u-glass {
+  background: var(--material-glass);
+  backdrop-filter: var(--material-glass-blur);
+  -webkit-backdrop-filter: var(--material-glass-blur);
+  border: 1px solid var(--material-glass-border);
+  box-shadow: var(--material-glass-highlight), var(--shadow-floating);
+}
+
+/* utilidad: glass fuerte (exclusivo de modales) */
+.u-glass-strong {
+  background: var(--material-glass-strong);
+  backdrop-filter: var(--material-glass-strong-blur);
+  -webkit-backdrop-filter: var(--material-glass-strong-blur);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  box-shadow: var(--material-glass-highlight), var(--shadow-modal);
+}
+
+/* utilidad: panel sólido de contenido (timeline, grillas, fichas) */
+.u-panel {
+  background: var(--level-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* ── accesibilidad: reduce transparency → modo Performance ── */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --material-glass: var(--level-2);
+    --material-glass-strong: var(--level-3);
+  }
+  .u-glass, .u-glass-strong {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ── accesibilidad: reduced motion → sin springs/morphs decorativos ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
