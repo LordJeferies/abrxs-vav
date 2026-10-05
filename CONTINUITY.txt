@@ -1,6 +1,6 @@
 # AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
 
-> Última actualización: 2026-10-05 (v0.6.0-M2a — M1 vertical REAL + M2 slice transcripción local, ambos en dev/vav-complete @ ccbef2a)
+> Última actualización: 2026-10-05 (v0.6.0-M2a — M1 vertical REAL + M2 slice transcripción local, ambos en dev/vav-complete @ 9547112)
 
 ## -2. SIGUIENTE SESIÓN (M2 continúa)
 

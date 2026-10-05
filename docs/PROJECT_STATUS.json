@@ -64,6 +64,7 @@
   "recentAchievements": [
     "0.5.1: Piece/MediaSource/Job target, timebase racional con drop-frame, versión única ABRXS_VERSION, paridad MCP 29↔29",
     "0.5.1: SHA streaming, filmstrip uniforme, paths hostiles, Doctor media con decode mpeg4 independiente de H264",
-    "0.6.0: vertical real MASTER→ingest→C01→MP4 E2E con reopen (proyecto+source+pieza+outputs persisten)"
+    "0.6.0: vertical real MASTER→ingest→C01→MP4 E2E con reopen (proyecto+source+pieza+outputs persisten)",
+    "0.6.0-M2a: media.transcribe REAL — mlx_whisper word-level JSON canónico + SRT/TXT derivados + cache por hash; paridad MCP 35↔35"
   ]
 }
