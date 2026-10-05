@@ -1,5 +1,24 @@
 # Cambios
 
+## AbrxsVAV 0.6.0 · 2026-10-05 (M1 — primer vertical real)
+
+- **Vertical MASTER → C01 → MP4 de punta a punta**: `media.ingest` (MediaSource +
+  probe con fps RACIONAL + hash streaming + proxy 540p + filmstrip uniforme + waveform,
+  todo con refs persistidas) → `canter.create_piece` (rango por frames out-exclusivos,
+  validado contra la duración del máster) → `canter.export_piece` (corte real MP4
+  re-encode, frames→segundos solo en la frontera ffmpeg) → **reopen**: proyecto,
+  sources, piezas y outputs persisten en disco.
+- **EntityRepository**: colecciones JSON atómicas y validadas para entidades con ids
+  no-uuid ("MS01", "C01").
+- **ActionCatalog +5** (`vav.media.ingest`, `vav.media.list_sources`,
+  `vav.canter.list_pieces`, `vav.canter.create_piece`, `vav.canter.export_piece`) y
+  **MCP +5 tools** — paridad 34↔34 verificada por test.
+- **PROJECT_STATUS.json**: fuente machine-readable para VAVStatus (parte del DoD).
+- Handlers refactorizados a `createJobHandlers(deps)` (stores inyectados); los handlers
+  puros siguen exportados como `handlers` para compatibilidad.
+- Versión 0.6.0 (fuente única ABRXS_VERSION). Branching: `dev/vav-complete` pasa a ser
+  la rama de integración del producto completo.
+
 ## AbrxsVAV 0.5.1 · 2026-10-05 (core hardening A — rama `dev/0.5.1-media-core`)
 
 - **Tiempo canónico con helpers racionales** (`packages/contracts/src/time.ts`):
