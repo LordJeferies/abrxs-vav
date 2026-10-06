@@ -16,6 +16,7 @@ import { ingestMaster, createPiece, exportPiece, alignSourceText, createPieceFro
 import { registerAsset, deleteAsset, type AssetStores } from './assets';
 import { buildDresserPlan, enqueueDresserRender, getDressPlan, type DresserStores } from './dresser';
 import { createBatch, getBatchStatus, type BatchStores } from './batch';
+import { searchAssets, grabFrame, similarAssets, attachAssetToEvent } from './visual-lab';
 import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
@@ -142,6 +143,12 @@ const server=createServer(async(req,res)=>{
         const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');
         send(res,200,analyzeGraph(await store.get(pid)));return;}
       if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
+      if(resource==='visual'){
+        if(req.method==='GET'&&id==='search'&&!action){const q=url.searchParams.get('q')??'';const all=await assetStores.assets.list();send(res,200,{hits:searchAssets(all,q,{kind:url.searchParams.get('kind')??undefined,projectId:url.searchParams.get('projectId')??undefined,clientId:url.searchParams.get('clientId')??undefined})});return;}
+        if(req.method==='GET'&&id==='similar'&&action){const all=await assetStores.assets.list();try{send(res,200,{hits:similarAssets(all,action,Number(url.searchParams.get('limit')||5))});}catch(e){send(res,404,{error:e instanceof Error?e.message:'No encontrado.'});}return;}
+        if(req.method==='POST'&&id==='frame'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),mediaSourceId:z.string().min(1),atSec:z.number().min(0),label:z.string().max(160).optional(),tags:z.array(z.string()).default([])}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de capturar frames.');send(res,201,await grabFrame({...dresserStores},{mediaSourceId:input.mediaSourceId,atSec:input.atSec,label:input.label,tags:input.tags,projectId:input.projectId}));return;}
+        if(req.method==='POST'&&id==='attach'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),eventId:z.string().min(1),assetId:z.string().min(1),note:z.string().max(160).optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de vincular.');send(res,200,await attachAssetToEvent({stores:dresserStores,editProject:store.edit.bind(store)},project,{eventId:input.eventId,assetId:input.assetId,note:input.note}));return;}
+      }
       if(resource==='batches'){
         if(req.method==='POST'&&!id){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),count:z.number().int().min(1).max(50).optional(),pieceIds:z.array(z.string().min(1)).min(1).optional(),clientId:z.string().optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear el lote.');const profile=input.clientId?await clientStore.get(input.clientId):project.content.clientId?await clientStore.get(project.content.clientId):undefined;const r=await createBatch(batchStores,engine,project,{count:input.count,pieceIds:input.pieceIds,profile:profile??undefined});send(res,201,r);return;}
         if(req.method==='GET'&&!id){const all=await batchStores.batches.list();send(res,200,{batches:all});return;}

@@ -1,5 +1,19 @@
 # Cambios
 
+## AbrxsVAV 0.6.0-M6 · 2026-10-06 (Visual Lab v1 — workspace de assets)
+
+- **Búsqueda determinista de assets** (`vav.visual.search`): scoring label(2)/
+  tags(1)/provenance(1) + prefix(0.5), acentos indiferentes, filtros kind/
+  project/client; sin query → últimos.
+- **Frame grab** (`vav.visual.frame`): ffmpeg extrae un frame del máster y lo
+  registra como Asset (provenance source_frame, tags). **Escalera de seeks**
+  validando salida: '-shortest' acorta el vídeo al audio y un -ss tras el EOF
+  produce 0 frames con exit 0 (hallazgo empírico; clamp + retrocesos).
+- **Compare** (`vav.visual.similar`): overlap real de tags (mismo kind preferido).
+- **USE** (`vav.visual.attach`): vincula un Asset a un evento visual del grafo
+  por CAS — swap registrado en extensions.why; Production Graph única verdad.
+- Paridad MCP **55↔55**. Tests 167 → **175**.
+
 ## AbrxsVAV 0.6.0-M5 · 2026-10-05 (Batch)
 
 - **Batch de piezas vestidas** (`apps/service/src/batch.ts`): auto-piezas por
