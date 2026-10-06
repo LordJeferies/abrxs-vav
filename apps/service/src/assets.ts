@@ -34,6 +34,7 @@ export async function registerAsset(stores: AssetStores, input: {
   label: string; path: string; kind?: AssetKind;
   projectId?: string; clientId?: string;
   provenance?: AssetProvenance;
+  tags?: string[];
 }): Promise<{ asset: Asset; created: boolean }> {
   const info = await stat(input.path).catch(() => null);
   if (!info || !info.isFile()) throw new Error(`El archivo no existe o no es un archivo regular: ${input.path}`);
