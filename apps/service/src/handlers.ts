@@ -1,14 +1,17 @@
 import { setTimeout as wait } from 'node:timers/promises';
 import { join } from 'node:path';
 import { stat } from 'node:fs/promises';
-import { graphSchema, framesToSeconds, secondsToFrames, type MediaSource, type Piece } from '@abraxas/contracts';
+import { graphSchema, framesToSeconds, secondsToFrames, type Asset, type MediaSource, type Piece } from '@abraxas/contracts';
 import type { JobHandler } from '@abraxas/core';
 import { providers } from './providers';
 import { compileComposition, type CompositionSpec } from '@abraxas/motion';
-import { probe, makeProxy, makeFilmstrip, makeWaveform, cutPiece } from './media';
+import { probe, makeProxy, makeFilmstrip, makeWaveform, cutPiece, renderFinal } from './media';
 import { transcribeMaster } from './transcribe';
 import type { EntityRepository } from './entity-repository';
 import { exportOutputPath, type CanterStores } from './canter';
+import type { DresserStores } from './dresser';
+
+const srtPathReadable=(p:string)=>p.split('/').pop()??p;
 
 /* Deps del vertical MASTER → MediaSource → Piece → MP4 (0.6.0). Sin deps,
    los handlers de media.ingest / canter.export_piece fallan con error claro
@@ -16,6 +19,7 @@ import { exportOutputPath, type CanterStores } from './canter';
 export interface JobHandlerDeps {
   mediaSources?: EntityRepository<MediaSource>;
   pieces?: EntityRepository<Piece>;
+  assets?: EntityRepository<Asset>;
   dataDirectory?: string;
 }
 
@@ -23,6 +27,11 @@ const requireStores = (deps: JobHandlerDeps): CanterStores => {
   if (!deps.mediaSources || !deps.pieces || !deps.dataDirectory)
     throw new Error('Handlers de media/canter sin stores: pasa mediaSources, pieces y dataDirectory al servicio.');
   return { mediaSources: deps.mediaSources, pieces: deps.pieces, dataDirectory: deps.dataDirectory };
+};
+const requireDresser = (deps: JobHandlerDeps): DresserStores => {
+  const base = requireStores(deps);
+  if (!deps.assets) throw new Error('Handler dresser sin store de assets: pasa assets al servicio.');
+  return { ...base, assets: deps.assets };
 };
 
 export const createJobHandlers = (deps: JobHandlerDeps = {}): Record<string, JobHandler> => ({
@@ -98,6 +107,32 @@ export const createJobHandlers = (deps: JobHandlerDeps = {}): Record<string, Job
       outputRefs:[...piece.outputRefs.filter(r=>!r.startsWith(outPath)),outPath]});
     return JSON.stringify({piece:saved.id,output:outPath,range:saved.sourceRange,
       timebase:`${source.timebase.fpsNumerator}/${source.timebase.fpsDenominator}`},null,2);
+  },
+  'dresser.render_piece':async(job,{signal,progress})=>{
+    const stores=requireDresser(deps);
+    const pieceId=job.target?.kind==='piece'?job.target.ref:null;
+    if(!pieceId)throw new Error('dresser.render_piece requiere target piece explícito.');
+    const piece=await stores.pieces.get(pieceId);
+    if(!piece)throw new Error(`Pieza ${pieceId} no existe.`);
+    const plan=(piece.extensions as {dressPlan?:import('./dresser').DressPlan}|undefined)?.dressPlan;
+    if(!plan)throw new Error(`La pieza ${pieceId} no tiene plan de Dresser (dresser.plan).`);
+    const source=await stores.mediaSources.get(piece.sourceRef);
+    if(!source?.timebase)throw new Error(`El máster ${piece.sourceRef} no está ingestado.`);
+    signal.throwIfAborted();
+    const renderNumber=Number((job.payload as {renderNumber?:unknown}|undefined)?.renderNumber??piece.outputRefs.length+1);
+    const outPath=join(stores.dataDirectory,'exports',piece.id,`dressed-${String(renderNumber).padStart(2,'0')}.mp4`);
+    const inSec=framesToSeconds(piece.sourceRange.startFrame,source.timebase);
+    const outSec=framesToSeconds(piece.sourceRange.endFrame,source.timebase);
+    await renderFinal({src:source.ref,inSec,outSec,outPath,
+      brolls:plan.brolls.map(b=>({imagePath:b.ref,inSec:b.inSec,outSec:b.outSec,motion:b.motion})),
+      srtPath:plan.captions.srtRef,
+      captionStyle:{fontName:plan.captionStyle.fontName,primaryColor:plan.captionStyle.primaryColor}});
+    await progress(0.9); signal.throwIfAborted();
+    const saved=await stores.pieces.put({...piece,
+      outputRefs:[...piece.outputRefs.filter(r=>!r.includes(`dressed-`)),outPath],
+      extensions:{...piece.extensions,lastDresserRender:{outPath,at:new Date().toISOString()}}});
+    return JSON.stringify({piece:saved.id,output:outPath,brolls:plan.brolls.length,
+      beats:plan.beats.length,captions:srtPathReadable(plan.captions.srtRef)},null,2);
   },
   'motion.render':async(job,{signal,progress})=>{
     // Composiciones motion viven en los eventos del grafo (extensions.motionComposition).

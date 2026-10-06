@@ -199,7 +199,7 @@ export const escapeFilterPath = (path: string): string => {
     .replace(/,/g, '\\,').replace(/;/g, '\\;').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
 };
 
-/* ── Render final v1: corte + B-rolls Ken Burns (fullscreen) + captions quemadas ── */
+  /* ── Render final v1: corte + B-rolls Ken Burns (fullscreen) + captions quemadas ── */
 export interface BrollOverlay { imagePath: string; inSec: number; outSec: number; motion: 'ZOOM_IN' | 'ZOOM_OUT' | 'STATIC'; }
 export interface RenderFinalOpts {
   src: string; inSec: number; outSec: number; outPath: string;
@@ -213,24 +213,28 @@ export async function renderFinal(o: RenderFinalOpts): Promise<string> {
   let last = '0:v';
   const brolls = o.brolls ?? [];
   const fps = 30;
+  // La BASE se escala al lienzo vertical cuando habrá overlays/captions: el
+  // overlay toma las dimensiones del primer input — sin esto, un máster no
+  // 1080x1920 saldría con b-rolls y captions fuera de cuadro (bug M4).
+  if (brolls.length > 0 || o.srtPath || o.vertical) {
+    filters.push('[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1[base]');
+    last = 'base';
+  }
   brolls.forEach((b, i) => {
     args.push('-loop', '1', '-t', (b.outSec - b.inSec).toFixed(3), '-i', b.imagePath);
-    const frames = Math.max(1, Math.round((b.outSec - b.inSec) * fps));
-    const zoom = b.motion === 'STATIC' ? '1.05' : b.motion === 'ZOOM_OUT' ? `'max(1.0,1.12-0.12*on/${frames})'` : `'min(1.18,1.0+0.12*on/${frames})'`;
+    const zoom = b.motion === 'STATIC' ? '1.05' : b.motion === 'ZOOM_OUT' ? `'max(1.0,1.12-0.12*on/${Math.max(1, Math.round((b.outSec - b.inSec) * fps))})'` : `'min(1.18,1.0+0.12*on/${Math.max(1, Math.round((b.outSec - b.inSec) * fps))})'`;
     filters.push(`[${i + 1}:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,zoompan=z=${zoom}:d=1:s=1080x1920:fps=${fps},setsar=1,format=yuv420p[b${i}]`);
-    const labelIn = i === 0 ? '[0:v]' : `[v${i - 1}]`;
+    const labelIn = i === 0 ? '[base]' : `[v${i - 1}]`;
     filters.push(`${labelIn}[b${i}]overlay=enable='between(t,${b.inSec.toFixed(2)},${b.outSec.toFixed(2)})'[v${i}]`);
     last = `v${i}`;
   });
-  let vf = last === '0:v' ? '' : `[${last}]`;
   if (o.srtPath) {
     const st = o.captionStyle ?? {};
     const force = `FontName=${st.fontName ?? 'Helvetica'},FontSize=${st.fontSize ?? 16},PrimaryColour=${st.primaryColor ?? '&H00FFFFFF'},OutlineColour=${st.outlineColour ?? '&H90000000'},Outline=1,Bold=1,MarginV=60`;
     const sub = `subtitles=${escapeFilterPath(o.srtPath)}:force_style='${force}'`;
-    vf = vf ? `${vf}${sub}[vout]` : `${sub}[vout]`;
-    filters.push(vf);
-  } else if (vf) {
-    filters.push(`${vf}null[vout]`);
+    filters.push(`[${last}]${sub}[vout]`);
+  } else if (last !== '0:v') {
+    filters.push(`[${last}]null[vout]`);
   }
   if (filters.length) args.push('-filter_complex', filters.join(';'), '-map', '[vout]');
   args.push('-map', '0:a?', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '21', '-c:a', 'aac', '-b:a', '160k', '-movflags', '+faststart', o.outPath);

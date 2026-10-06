@@ -53,7 +53,11 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.assets.register', module:'library', summary:'Registra un archivo como Asset (hash streaming, kind por extensión; idempotente por ref+hash).', method:'POST', path:'/api/assets', destructive:false, requiresOpenProject:false, since:'0.6.0' },
   { name:'vav.assets.delete', module:'library', summary:'Elimina el registro de un asset (el archivo en disco no se borra).', method:'POST', path:'/api/assets/:id/delete', destructive:true, requiresOpenProject:false, since:'0.6.0' },
   { name:'vav.clients.import_json', module:'clients', summary:'Importa/valida un ClientProfile JSON completo con diff (apply:true aplica).', method:'POST', path:'/api/clients/:id/import_json', destructive:false, requiresOpenProject:false, since:'0.6.0' },
-  { name:'vav.projects.set_client', module:'hub', summary:'Vincula (o desvincula con null) un cliente al proyecto vía CAS por revisión.', method:'POST', path:'/api/projects/:id/client', destructive:false, requiresOpenProject:true, since:'0.6.0' }
+  { name:'vav.projects.set_client', module:'hub', summary:'Vincula (o desvincula con null) un cliente al proyecto vía CAS por revisión.', method:'POST', path:'/api/projects/:id/client', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  /* ── 0.6.0-M4 — Dresser MVP ── */
+  { name:'vav.dresser.plan', module:'dresser', summary:'Visual Director determinista: beats del transcript + keywords + reglas del cliente → eventos b_roll/caption en el grafo (CAS) + dressPlan.', method:'POST', path:'/api/dresser/plan', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.dresser.get_plan', module:'dresser', summary:'Plan de Dresser persistido de una pieza (beats con WHY, brolls, captions).', method:'GET', path:'/api/dresser/plan/:id', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.dresser.render', module:'dresser', summary:'Encola el render VESTIDO de la pieza (b-roll zoompan + captions quemadas sobre el corte real).', method:'POST', path:'/api/dresser/render', destructive:false, requiresOpenProject:true, since:'0.6.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */
