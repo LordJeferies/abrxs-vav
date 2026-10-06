@@ -4,13 +4,13 @@
   "stableBranch": "main",
   "developmentBranch": "dev/vav-complete",
   "currentVersion": "0.6.0",
-  "currentMilestone": "M5 — Batch (auto-piezas + anti-repetición de b-rolls + pausa/reanudación) — REAL",
-  "currentTask": "M5 integrado; siguiente M6: Visual Lab (búsqueda/generación/comparación de assets)",
-  "nextAction": "M6: Visual Lab — fuentes client/source/stock, compare y use-asset sobre AssetSlot",
-  "updatedAt": "2026-10-06T03:35:25.000Z",
+  "currentMilestone": "M6 — Visual Lab v1 (search/frame-grab/similar/attach sobre AssetStore) — REAL servicio/API/MCP",
+  "currentTask": "M6 integrado; siguiente M7: XR/Visual Packs/Remotion según ROADMAP, y UI Visual Lab assets",
+  "nextAction": "M7: XR base (TYPO/PHOTOS/COMIC_INFO...) como Visual Packs + adapters Remotion/VideoFlow sobre ProductionGraph",
+  "updatedAt": "2026-10-06T09:45:47.000Z",
   "tests": {
-    "total": 167,
-    "passing": 167,
+    "total": 175,
+    "passing": 175,
     "failing": 0
   },
   "ci": "green (GitHub Actions: check + test + build)",
@@ -85,6 +85,7 @@
     "0.6.0-M2b: text→Piece (align exact/normalized/anchors/fuzzy con gating) + UI Canter completa + streaming Range seguro + Doctor whisper honesto; paridad MCP 40↔40",
     "0.6.0-M3: AssetStore canónico (hash streaming, idempotente por ref+hash, ids sin reciclar, provenance/licencia) + ClientProfile v1.1 (voice/audience/logos) + import JSON + vínculo proyecto→cliente por CAS; paridad MCP 45↔45",
     "0.6.0-M4: Dresser MVP — Visual Director determinista (beats del transcript, keywords→tags, densidad/negativas del cliente, WHY por beat) + eventos en el grafo por CAS + render vestido 1080x1920 con b-roll zoompan y captions quemadas; bug de base-sin-escalar en renderFinal corregido",
-    "0.6.0-M5: Batch — auto-piezas por partición entera del máster, anti-repetición de b-rolls entre clips (excludeAssetIds + WHY), pausa/reanudación cooperativa del JobEngine, estado de lote calculado de los jobs; paridad MCP 51↔51"
+    "0.6.0-M5: Batch — auto-piezas por partición entera del máster, anti-repetición de b-rolls entre clips (excludeAssetIds + WHY), pausa/reanudación cooperativa del JobEngine, estado de lote calculado de los jobs; paridad MCP 51↔51",
+    "0.6.0-M6: Visual Lab — búsqueda determinista de assets (scoring label/tags/prefix), frame grab con escalera de seeks (clamp a EOF del vídeo), compare por overlap de tags, USE: attach de asset a eventos del grafo por CAS con WHY; paridad MCP 55↔55"
   ]
 }

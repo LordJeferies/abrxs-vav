@@ -51,6 +51,7 @@ export async function registerAsset(stores: AssetStores, input: {
     projectId: input.projectId, clientId: input.clientId,
     provenance: input.provenance ?? { origin: 'import' },
     createdAt: new Date().toISOString(),
+    extensions: input.tags?.length ? { tags: input.tags } : undefined,
   });
   return { asset: await stores.assets.put(asset), created: true };
 }

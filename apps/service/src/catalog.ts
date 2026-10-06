@@ -61,7 +61,12 @@ export const catalog: ActionDefinition[] = [
   /* ── 0.6.0-M5 — Batch ── */
   { name:'vav.batches.create', module:'dresser', summary:'Crea un lote: auto-piezas desde el máster (count) o pieceIds, plan con anti-repetición de b-rolls y render jobs en cola.', method:'POST', path:'/api/batches', destructive:false, requiresOpenProject:true, since:'0.6.0' },
   { name:'vav.batches.list', module:'dresser', summary:'Lotes registrados del servicio.', method:'GET', path:'/api/batches', destructive:false, requiresOpenProject:false, since:'0.6.0' },
-  { name:'vav.batches.status', module:'dresser', summary:'Estado CALCULADO de un lote desde sus jobs (completed/partial/failed/running).', method:'GET', path:'/api/batches/:id/status', destructive:false, requiresOpenProject:false, since:'0.6.0' }
+  { name:'vav.batches.status', module:'dresser', summary:'Estado CALCULADO de un lote desde sus jobs (completed/partial/failed/running).', method:'GET', path:'/api/batches/:id/status', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  /* ── 0.6.0-M6 — Visual Lab (workspace de assets) ── */
+  { name:'vav.visual.search', module:'visual-lab', summary:'Búsqueda determinista de assets (label/tags/provenance) con scoring y filtros.', method:'GET', path:'/api/visual/search', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.visual.frame', module:'visual-lab', summary:'Frame grab: extrae un frame del máster a un Asset con provenance source_frame.', method:'POST', path:'/api/visual/frame', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.visual.similar', module:'visual-lab', summary:'Assets similares para comparar (overlap de tags, mismo kind preferido).', method:'GET', path:'/api/visual/similar/:id', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.visual.attach', module:'visual-lab', summary:'USE: vincula un Asset a un evento visual del grafo por CAS (swap con WHY).', method:'POST', path:'/api/visual/attach', destructive:false, requiresOpenProject:true, since:'0.6.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */
