@@ -82,6 +82,7 @@
           "enum": [
             "manual_cut",
             "auto_segment",
+            "transcript_text_alignment",
             "visual_plan",
             "import",
             "generation",

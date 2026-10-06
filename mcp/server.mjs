@@ -65,6 +65,11 @@ const tools = [
   { name: 'vav_canter_list_pieces', description: 'Lista las piezas (clips) persistidas; opcionalmente filtradas por projectId.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' } } } },
   { name: 'vav_canter_create_piece', description: 'Crea una Piece: rango por FRAMES out-exclusivo sobre un MediaSource ingestado.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, pieceId: { type: 'string' }, label: { type: 'string' }, mediaSourceId: { type: 'string' }, startFrame: { type: 'number' }, endFrame: { type: 'number' } }, required: ['projectId', 'revision', 'label', 'mediaSourceId', 'startFrame', 'endFrame'] } },
   { name: 'vav_canter_transcribe', description: 'Transcribe un máster ingestado (whisper local word-level, cache por hash) → words.json + SRT/TXT derivados.', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, mediaSourceId: { type: 'string' } }, required: ['projectId', 'revision', 'mediaSourceId'] } },
+  { name: 'vav_canter_align_text', description: 'Alinea texto (o anclas inicio/fin) contra el transcript word-level de un máster → candidates[] con frames. NO crea nada.', inputSchema: { type: 'object', additionalProperties: false, properties: { mediaSourceId: { type: 'string' }, text: { type: 'string' }, openingText: { type: 'string' }, closingText: { type: 'string' } }, required: ['mediaSourceId'] } },
+  { name: 'vav_canter_create_piece_from_text', description: 'Crea una Piece desde TEXTO alineado al transcript. Con matches ambiguos devuelve candidates[] (elige con candidateIndex).', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, label: { type: 'string' }, mediaSourceId: { type: 'string' }, text: { type: 'string' }, openingText: { type: 'string' }, closingText: { type: 'string' }, candidateIndex: { type: 'number' }, pieceId: { type: 'string' } }, required: ['projectId', 'revision', 'label', 'mediaSourceId'] } },
+  { name: 'vav_canter_get_transcript', description: 'Lee el transcript word-level canónico de un MediaSource (segments + words).', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string', description: 'mediaSourceId' } }, required: ['id'] } },
+  { name: 'vav_canter_update_piece', description: 'Actualiza label y/o sourceRange (frames out-exclusivos) de una pieza.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string', description: 'pieceId' }, label: { type: 'string' }, startFrame: { type: 'number' }, endFrame: { type: 'number' } }, required: ['id'] } },
+  { name: 'vav_canter_delete_piece', description: 'Elimina una pieza (destructiva: pide confirm). Los MP4 exportados no se borran.', inputSchema: { type: 'object', additionalProperties: false, properties: { id: { type: 'string', description: 'pieceId' }, confirm: { type: 'boolean' } }, required: ['id'] } },
   { name: 'vav_canter_export_piece', description: 'Encola el corte real MP4 de una pieza (job canter.export_piece).', inputSchema: { type: 'object', additionalProperties: false, properties: { projectId: { type: 'string' }, revision: { type: 'number' }, id: { type: 'string', description: 'pieceId, p.ej. C01' } }, required: ['projectId', 'revision', 'id'] } }
 ];
 
@@ -104,6 +109,11 @@ async function callTool(name, args) {
     case 'vav_canter_list_pieces': return api('vav.canter.list_pieces', args);
     case 'vav_canter_create_piece': return api('vav.canter.create_piece', { ...args, sourceRange: { startFrame: args.startFrame, endFrame: args.endFrame } });
     case 'vav_canter_transcribe': return api('vav.canter.transcribe', args);
+    case 'vav_canter_align_text': return api('vav.canter.align_text', args);
+    case 'vav_canter_create_piece_from_text': return api('vav.canter.create_piece_from_text', args);
+    case 'vav_canter_get_transcript': return api('vav.canter.get_transcript', args);
+    case 'vav_canter_update_piece': return api('vav.canter.update_piece', { id: args.id, label: args.label, sourceRange: args.startFrame != null ? { startFrame: args.startFrame, endFrame: args.endFrame } : undefined });
+    case 'vav_canter_delete_piece': return api('vav.canter.delete_piece', args);
     case 'vav_canter_export_piece': return api('vav.canter.export_piece', args);
     case 'vav_smoke': {
       const stamp = new Date().toISOString().replace(/[:.]/g, '-');

@@ -4,20 +4,20 @@
   "stableBranch": "main",
   "developmentBranch": "dev/vav-complete",
   "currentVersion": "0.6.0",
-  "currentMilestone": "M2 — transcripción local word-level + Canter completo (slice 1: media.transcribe REAL)",
-  "currentTask": "M2 slice 1 integrado; siguiente: texto→rango de pieza (alignment) + UI de piezas + diarización opcional",
-  "nextAction": "M2 slice 2: crear piezas por TEXTO desde el transcript word-level (alignment textual sobre frames canónicos)",
-  "updatedAt": "2026-10-05T15:35:47.000Z",
+  "currentMilestone": "M2 — Canter completo (transcripción + alignment + UI) — REAL",
+  "currentTask": "M2 cerrado y en PR #4 (revisión/integración); siguiente milestone M3",
+  "nextAction": "M3: AssetStore canónico (assets source/generated/client con provenance) y consolidación Client Profiles",
+  "updatedAt": "2026-10-05T21:16:52.000Z",
   "tests": {
-    "total": 102,
-    "passing": 102,
+    "total": 142,
+    "passing": 142,
     "failing": 0
   },
   "ci": "green (GitHub Actions: check + test + build)",
   "doctor": "0.6.0 — Node/almacenamiento/media checks PASS (ffmpeg, ffprobe, temp, disk, decode mpeg4, H264)",
   "modules": {
     "core": "REAL",
-    "canter": "PARTIAL",
+    "canter": "REAL",
     "dresser": "PENDING",
     "visualLab": "PARTIAL",
     "review": "PENDING",
@@ -41,8 +41,8 @@
     },
     {
       "id": "M2",
-      "name": "transcripción local word-level + Canter completo",
-      "status": "PARTIAL"
+      "name": "transcripción local word-level + Canter completo (UI incluida)",
+      "status": "REAL"
     },
     {
       "id": "M3",
@@ -65,6 +65,7 @@
     "0.5.1: Piece/MediaSource/Job target, timebase racional con drop-frame, versión única ABRXS_VERSION, paridad MCP 29↔29",
     "0.5.1: SHA streaming, filmstrip uniforme, paths hostiles, Doctor media con decode mpeg4 independiente de H264",
     "0.6.0: vertical real MASTER→ingest→C01→MP4 E2E con reopen (proyecto+source+pieza+outputs persisten)",
-    "0.6.0-M2a: media.transcribe REAL — mlx_whisper word-level JSON canónico + SRT/TXT derivados + cache por hash; paridad MCP 35↔35"
+    "0.6.0-M2a: media.transcribe REAL — mlx_whisper word-level JSON canónico + SRT/TXT derivados + cache por hash; paridad MCP 35↔35",
+    "0.6.0-M2b: text→Piece (align exact/normalized/anchors/fuzzy con gating) + UI Canter completa + streaming Range seguro + Doctor whisper honesto; paridad MCP 40↔40"
   ]
 }

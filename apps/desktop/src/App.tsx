@@ -3,6 +3,7 @@ import { ProjectHub } from './ProjectHub';
 import { Activity } from './Activity';
 import { ModuleErrorBoundary } from './ModuleErrorBoundary';
 import { VisualStudio } from './VisualStudio';
+import { Canter } from './Canter';
 import { lazy, Suspense, useMemo, useState, type ReactNode } from 'react';
 const Workflow = lazy(()=>import('./Workflow'));
 
@@ -10,7 +11,7 @@ type Station = 'hub'|'plan'|'canter'|'dresser'|'visual'|'workflow'|'review'|'del
 const stations: {id:Station; label:string; description:string; status?:string}[] = [
   {id:'hub',label:'Project Hub',description:'Estado y continuidad del proyecto'},
   {id:'plan',label:'Plan',description:'Idea · Beta · Alfa · guion · Visual Plan',status:'planned'},
-  {id:'canter',label:'Canter',description:'Transcribir · alinear · seleccionar · cortar',status:'adapter'},
+  {id:'canter',label:'Canter',description:'Transcribir · alinear · seleccionar · cortar',status:'m2'},
   {id:'dresser',label:'Dresser',description:'B-roll · XR · captions · motion · SFX',status:'planned'},
   {id:'visual',label:'Visual Lab',description:'Visual Studio · buscar · generar · comparar',status:'studio-v1'},
   {id:'workflow',label:'Workflow Studio',description:'Recipes y automatización audiovisual',status:'prototype'},

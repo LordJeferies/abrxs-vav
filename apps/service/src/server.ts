@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { readFile, mkdir, open, unlink } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { readFile, mkdir, open, unlink, stat } from 'node:fs/promises';
 import { resolve, join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -8,9 +9,10 @@ import { ProjectStore, JobEngine, ConflictError, NotFoundError } from '@abraxas/
 import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema, jobTargetSchema, jobPayloadSchema, mediaSourceSchema, pieceSchema, ABRXS_VERSION } from '@abraxas/contracts';
 import { FileRepository } from './file-repository';
 import { EntityRepository } from './entity-repository';
+import { parseHttpRange } from './http-range';
 import { createJobHandlers } from './handlers';
 import { catalog } from './catalog';
-import { ingestMaster, createPiece, exportPiece, type CanterStores } from './canter';
+import { ingestMaster, createPiece, exportPiece, alignSourceText, createPieceFromText, updatePiece, deletePiece, loadTranscript, type CanterStores } from './canter';
 import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
@@ -133,9 +135,41 @@ const server=createServer(async(req,res)=>{
         send(res,200,analyzeGraph(await store.get(pid)));return;}
       if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
       // ── 0.6.0 — M1: vertical real MASTER → MediaSource → Piece → MP4 ──
+      if(resource==='canter'){
+        if(req.method==='GET'&&id==='transcript'&&action){const source=await canterStores.mediaSources.get(action);if(!source)throw new NotFoundError('MediaSource no encontrada.');send(res,200,await loadTranscript(canterStores,source));return;}
+        if(req.method==='POST'&&id==='align'&&!action){const input=z.strictObject({mediaSourceId:z.string().min(1),text:z.string().optional(),openingText:z.string().optional(),closingText:z.string().optional()}).parse(await body(req));const source=await canterStores.mediaSources.get(input.mediaSourceId);if(!source)throw new NotFoundError('MediaSource no encontrada.');send(res,200,{candidates:await alignSourceText(canterStores,source,input)});return;}
+        if(req.method==='POST'&&id==='pieces'&&action==='from_text'&&!extra){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),label:z.string().trim().min(1).max(160),mediaSourceId:z.string().min(1),text:z.string().optional(),openingText:z.string().optional(),closingText:z.string().optional(),candidateIndex:z.number().int().nonnegative().optional(),pieceId:z.string().trim().min(1).max(120).optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear la pieza.');const result=await createPieceFromText(canterStores,input);if(!result.piece){send(res,409,{error:'Texto ambiguo: elige un candidate.',candidates:result.candidates});return;}send(res,201,result.piece);return;}
+        if(req.method==='PUT'&&id==='pieces'&&action&&!extra){const input=z.strictObject({label:z.string().trim().min(1).max(160).optional(),sourceRange:z.strictObject({startFrame:z.number().int().nonnegative(),endFrame:z.number().int().positive()}).optional()}).parse(await body(req));send(res,200,await updatePiece(canterStores,action,input));return;}
+        if(req.method==='POST'&&id==='pieces'&&action&&extra==='delete'){send(res,200,{deleted:await deletePiece(canterStores,action)});return;}
+      }
       if(resource==='media'){
         if(req.method==='POST'&&id==='ingest'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),path:z.string().min(1),label:z.string().max(160).optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de ingestar.');send(res,201,await ingestMaster(canterStores,engine,project,{path:input.path,label:input.label}));return;}
         if(req.method==='GET'&&!id){send(res,200,{sources:await canterStores.mediaSources.list()});return;}
+        /* Streaming SEGURO: el cliente NUNCA envía un path — solo mediaSourceId +
+           kind. El path se resuelve desde la entidad persistida (no arbitrary-file
+           server). Range estricto: 200/206/416; el stream se destruye si el
+           cliente aborta. */
+        if(req.method==='GET'&&id&&action==='file'&&!extra){
+          if(!/^[A-Za-z0-9][A-Za-z0-9_-]*$/.test(id)){send(res,400,{error:'Identificador de fuente inválido.'});return;}
+          const source=await canterStores.mediaSources.get(id);
+          if(!source)throw new NotFoundError(`MediaSource ${id} no existe.`);
+          const kind=url.searchParams.get('kind')||'proxy';
+          const allowed:Record<string,string|undefined>={master:source.ref,proxy:source.proxyRef,filmstrip:source.filmstripRef,waveform:source.waveformRef,transcript:source.transcriptRef};
+          const target=allowed[kind];
+          if(!target){send(res,404,{error:`El derivado "${kind}" no existe para ${id}.`});return;}
+          const statFile=await stat(target).catch(()=>null);
+          if(!statFile||!statFile.isFile()){send(res,404,{error:'Archivo no encontrado en disco.'});return;}
+          const type=({'.mp4':'video/mp4','.m4a':'audio/mp4','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.json':'application/json'} as Record<string,string>)[extname(target).toLowerCase()]||'application/octet-stream';
+          const range=parseHttpRange(req.headers.range,statFile.size);
+          if(range==='invalid'){res.writeHead(416,{'Content-Range':`bytes */${statFile.size}`,'Accept-Ranges':'bytes'});res.end();return;}
+          const base={'Content-Type':type,'Accept-Ranges':'bytes','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
+          if(range){res.writeHead(206,{...base,'Content-Range':`bytes ${range.start}-${range.end}/${statFile.size}`,'Content-Length':range.end-range.start+1});}
+          else res.writeHead(200,{...base,'Content-Length':statFile.size});
+          const stream=createReadStream(target,range?{start:range.start,end:range.end}:undefined);
+          stream.on('error',()=>{stream.destroy();res.destroy();});
+          req.on('close',()=>stream.destroy());
+          stream.pipe(res);return;
+        }
       }
       if(resource==='canter'){
         if(req.method==='GET'&&id==='pieces'&&!action){const pid=url.searchParams.get('projectId');const all=await canterStores.pieces.list();send(res,200,{pieces:pid?all.filter(p=>p.projectId===pid):all});return;}

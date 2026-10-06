@@ -12,5 +12,5 @@ for(const [name,schema] of [['projects',projectSchema],['jobs',jobSchema]] as co
  catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')reports.push({check:name,status:'NOT_CREATED',detail:'Se creará al iniciar el servicio.'});else reports.push({check:name,status:'FAIL',detail:error instanceof Error?error.message:'Error de lectura'});}
 }
 reports.push(...await runMediaChecks());
-console.log(JSON.stringify({version:ABRXS_VERSION,scope:'Node, almacenamiento (projects/jobs) y capacidades locales de media (ffmpeg/ffprobe, temp, disk, decode, H264); no certifica modelos, MLX, providers AI, ComfyUI, Tauri ni NLEs.',reports},null,2));
+console.log(JSON.stringify({version:ABRXS_VERSION,scope:'Node, almacenamiento (projects/jobs) y capacidades locales de media: ffmpeg/ffprobe, temp, disk, decode (mpeg4), encode H264, whisper.cpp (binario+modelo) y mlx_whisper (CLI+modelo cacheado); no certifica providers AI, ComfyUI, Tauri ni NLEs.',reports},null,2));
 if(reports.some(r=>r.status==='FAIL'))process.exitCode=1;

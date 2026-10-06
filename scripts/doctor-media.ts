@@ -5,7 +5,7 @@
    testeable en tests/media.test.ts. */
 import { execFile } from 'node:child_process';
 import { statfs, mkdtemp, writeFile, rm, stat } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export interface MediaReport { check: string; status: 'PASS'|'FAIL'|'WARN'|'INFO'|'SKIP'; detail: string }
@@ -127,6 +127,24 @@ export async function runMediaChecks(): Promise<MediaReport[]> {
     reports.push(h264Detail
       ? { check: 'encode H264', status: 'PASS', detail: `encoder probado con fixture real: ${h264Detail}` }
       : { check: 'encode H264', status: 'FAIL', detail: 'sin encoder H264 (libx264/h264_videotoolbox)' });
+
+    // Whisper local: binario y modelo se reportan POR SEPARADO — jamás PASS sin
+    // modelo real. whisper.cpp sin modelo ggml → SKIP honesto; mlx si está cacheado.
+    const whisperBin=await run('whisper-cli',['--help'],20_000);
+    reports.push(whisperBin.code===0
+      ? {check:'whisper.cpp binario',status:'PASS',detail:'whisper-cli disponible'}
+      : {check:'whisper.cpp binario',status:'SKIP',detail:'no instalado (backend preferido: mlx_whisper)'});
+    const cppModel=process.env.ABRXS_WHISPER_CPP_MODEL||'';
+    if(whisperBin.code===0)reports.push(cppModel
+      ? {check:'whisper.cpp modelo',status:'PASS',detail:cppModel}
+      : {check:'whisper.cpp modelo',status:'SKIP',detail:'sin modelo ggml — configura ABRXS_WHISPER_CPP_MODEL (no se descarga automáticamente)'});
+    const mlxCheck=await run('mlx_whisper',['--help'],20_000);
+    const mlxModel=process.env.ABRXS_MLX_MODEL||'mlx-community/whisper-large-v3-turbo';
+    const hfCache=join(process.env.HOME||'','.cache','huggingface','hub',`models--${mlxModel.replace(/\//g,'--')}`);
+    let mlxModelOk=false;try{await stat(hfCache);mlxModelOk=true;}catch{}
+    reports.push(mlxCheck.code===0
+      ? {check:'mlx_whisper',status:'PASS',detail:mlxModelOk?`modelo cacheado: ${mlxModel}`:`CLI disponible; modelo ${mlxModel} sin caché local (se descarga al transcribir)`}
+      : {check:'mlx_whisper',status:'SKIP',detail:'no instalado'});
 
     // VideoToolbox: solo informativo (no es requisito cross-platform).
     if (process.platform === 'darwin') {

@@ -1,5 +1,22 @@
 # Cambios
 
+## AbrxsVAV 0.6.0-M2b · 2026-10-05 (M2 cerrado: Canter completo con UI)
+
+- **UI Canter real** (Canter.tsx): viewer de máster por PROXY con streaming
+  Range (scrub sin cargar el máster), filmstrip, transcript clicable, creación
+  de piezas por TEXTO/ANCLAS con candidates ambiguos, inspector frame-aware,
+  export con job, delete con confirmación.
+- **Text→Piece hardening**: índice {normalized, originalWordIndex}; fuzzy solo
+  ≥4 tokens con decideAlignment (≥0.9 y ventaja ≥0.05 para auto-crear; si no
+  AMBIGUOUS/UNRESOLVED con candidates); floor/ceil racionales — el clip no
+  corta palabras (tests en 6 timebases).
+- **Seguridad de streaming**: /api/media/:id/file — el cliente jamás envía
+  paths; id+kind resuelven contra la entidad persistida; Range 206/416
+  estricto; traversal imposible; E2E HTTP con servidor real en proceso hijo.
+- **Doctor**: whisper.cpp binario PASS / modelo SKIP (sin ggml; no descarga
+  automática) y mlx_whisper PASS con modelo cacheado.
+- Paridad MCP 40↔40. 102 → **142 tests**. Diarización: PENDING documentado.
+
 ## AbrxsVAV 0.6.0-M2a · 2026-10-05 (transcripción local word-level — slice 1)
 
 - **media.transcribe** (job con target `media_source`): transcripción LOCAL real con

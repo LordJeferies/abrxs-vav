@@ -52,6 +52,24 @@ describe('EntityRepository (colección JSON atómica)',()=>{
     await reopened.init();
     expect((await reopened.list()).map(p=>p.id).sort()).toEqual(['C01','C02']);
   });
+  it('remove: existente → true y desaparece; inexistente → false',async()=>{
+    const {repo}=await makeRepo('pieces.json','piece');
+    await repo.put(piece('C01'));await repo.put(piece('C02'));
+    expect(await repo.remove('C01')).toBe(true);
+    expect(await repo.get('C01')).toBeNull();
+    expect(await repo.remove('C01')).toBe(false); // ya no existe
+    expect((await repo.list()).map(p=>p.id)).toEqual(['C02']);
+  });
+  it('remove + reopen: la persistencia queda válida sin la entidad borrada',async()=>{
+    const {path,repo}=await makeRepo('pieces.json','piece');
+    await repo.put(piece('C01'));await repo.put(piece('C02'));
+    await repo.remove('C01');
+    const raw=JSON.parse(await readFile(path,'utf8'));          // JSON válido
+    expect(raw.entities).toHaveLength(1);
+    const reopened=new EntityRepository(path,pieceSchema,'abrxs.pieces.v1');await reopened.init();
+    expect((await reopened.list()).map(p=>p.id)).toEqual(['C02']);
+    expect(await reopened.get('C01')).toBeNull();
+  });
   it('archivo inexistente al reabrir → colección vacía (no crash)',async()=>{
     const dir=await mkdtemp(join(tmpdir(),'abrxs-entity-'));directories.push(dir);
     const repo=new EntityRepository(join(dir,'nuevo.json'),mediaSourceSchema,'abrxs.media-sources.v1');

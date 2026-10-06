@@ -36,6 +36,16 @@ export class EntityRepository<T extends { id: string }> {
   get(id: string): Promise<T | null> {
     return this.queue.run(async () => (await this.load()).find(e => e.id === id) ?? null);
   }
+  remove(id: string): Promise<boolean> {
+    return this.queue.run(async () => {
+      const list = await this.load();
+      const index = list.findIndex(e => e.id === id);
+      if (index < 0) return false;
+      list.splice(index, 1);
+      await atomicWrite(this.path, JSON.stringify({ schemaVersion: this.collection, entities: list }, null, 2));
+      return true;
+    });
+  }
   put(value: T): Promise<T> {
     return this.queue.run(async () => {
       const valid = this.schema.parse(value);
