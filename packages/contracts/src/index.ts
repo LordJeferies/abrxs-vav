@@ -54,6 +54,20 @@ export const assetSchema = z.strictObject({
 });
 export type Asset = z.infer<typeof assetSchema>;
 
+/** Lote de piezas vestidas y renderizadas (M5 Batch). El estado NO se persiste:
+    se calcula de los jobs (única verdad del trabajo) — honesto y sin deriva. */
+export const batchSchema = z.strictObject({
+  schemaVersion: z.literal('abrxs.batch.v1'),
+  id: z.string().min(1).max(120),          // "B01"
+  projectId: z.string().min(1),
+  pieceIds: z.array(z.string().min(1)).min(1),
+  jobIds: z.array(z.string().min(1)).default([]),
+  clientId: z.string().optional(),
+  createdAt: z.string(),
+  extensions: z.record(z.string(), z.unknown()).optional()
+});
+export type Batch = z.infer<typeof batchSchema>;
+
 /* v2.5 (0.5.1): objetivo explícito del job — qué procesa, nunca "el primer evento compatible". */
 export const jobTargetKindSchema = z.enum(['project','piece','event','asset','media_source']);
 export type JobTargetKind = z.infer<typeof jobTargetKindSchema>;

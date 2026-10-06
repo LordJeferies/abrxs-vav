@@ -7,7 +7,11 @@ export interface JobEngineOptions {
   defaultWatchdogMs?:number;
 }
 export class JobEngine {
-  private queue=new SerialQueue(); private active=new Map<string,AbortController>(); private pumping=false; private stopped=false; private runningTask:Promise<void>=Promise.resolve();
+  private queue=new SerialQueue(); private active=new Map<string,AbortController>(); private pumping=false; private stopped=false; private runningTask:Promise<void>=Promise.resolve(); private paused=false;
+  /** Pausa la DESENCOLACIÓN: los jobs en curso terminan (pausa cooperativa). */
+  pause():void{this.paused=true;}
+  resume():void{this.paused=false;this.pump();}
+  get isPaused():boolean{return this.paused;}
   constructor(private repository:Repository<Job>,private handlers:Record<string,JobHandler>,private fingerprint:(value:string)=>string,private options:JobEngineOptions={}){}
   list(){return this.repository.list();}
   async get(id:string){const j=await this.repository.get(id);if(!j)throw new NotFoundError('Trabajo no encontrado.');return j;}
@@ -46,9 +50,9 @@ export class JobEngine {
   });}
   async stop(){this.stopped=true;for(const controller of this.active.values())controller.abort();await this.runningTask;await this.queue.run(async()=>{});}
   private async save(job:Job){const value=jobSchema.parse({...job,updatedAt:new Date().toISOString()});await this.repository.put(value.id,value);return value;}
-  private pump(){if(this.pumping||this.stopped)return;this.pumping=true;this.runningTask=Promise.resolve().then(()=>this.run()).catch(e=>{console.error('Job engine persistence error:',e);this.stopped=true;}).finally(async()=>{this.pumping=false;if(!this.stopped&&(await this.list()).some(j=>j.status==='queued'))this.pump();});}
+  private pump(){if(this.pumping||this.stopped||this.paused)return;this.pumping=true;this.runningTask=Promise.resolve().then(()=>this.run()).catch(e=>{console.error('Job engine persistence error:',e);this.stopped=true;}).finally(async()=>{this.pumping=false;if(!this.stopped&&!this.paused&&(await this.list()).some(j=>j.status==='queued'))this.pump();});}
   private async run(){
-    while(!this.stopped){
+    while(!this.stopped&&!this.paused){
       const job=await this.queue.run(async()=>{
         const candidate=(await this.list()).filter(j=>j.status==='queued').sort((a,b)=>a.createdAt.localeCompare(b.createdAt))[0];
         if(!candidate)return null;return this.save({...candidate,status:'running',attempt:candidate.attempt+1});

@@ -1,5 +1,18 @@
 # Cambios
 
+## AbrxsVAV 0.6.0-M5 · 2026-10-05 (Batch)
+
+- **Batch de piezas vestidas** (`apps/service/src/batch.ts`): auto-piezas por
+  partición entera canónica del máster (sin solapes ni huecos) o pieceIds
+  explícitos; plan por pieza con **anti-repetición de b-rolls** (los assets
+  usados se reservan para el resto del lote — el WHY lo dice honestamente);
+  render jobs en cola con dedupe por fingerprint intacto.
+- **JobEngine.pause/resume** (aditivo): pausa COOPERATIVA — deja de desencolar,
+  los jobs en curso terminan. Estado del lote CALCULADO de los jobs (nunca
+  duplicado).
+- Acciones vav.batches.create/list/status + MCP ×3 → paridad **51↔51**.
+  Tests 158 → **167**.
+
 ## AbrxsVAV 0.6.0-M4 · 2026-10-05 (Dresser MVP)
 
 - **Visual Director determinista** (`apps/service/src/dresser.ts`): beats del

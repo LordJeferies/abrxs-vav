@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { ProjectStore, JobEngine, ConflictError, NotFoundError } from '@abraxas/core';
-import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema, jobTargetSchema, jobPayloadSchema, mediaSourceSchema, pieceSchema, assetSchema, ABRXS_VERSION } from '@abraxas/contracts';
+import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema, jobTargetSchema, jobPayloadSchema, mediaSourceSchema, pieceSchema, assetSchema, batchSchema, ABRXS_VERSION } from '@abraxas/contracts';
 import { FileRepository } from './file-repository';
 import { EntityRepository } from './entity-repository';
 import { parseHttpRange } from './http-range';
@@ -15,6 +15,7 @@ import { catalog } from './catalog';
 import { ingestMaster, createPiece, exportPiece, alignSourceText, createPieceFromText, updatePiece, deletePiece, loadTranscript, type CanterStores } from './canter';
 import { registerAsset, deleteAsset, type AssetStores } from './assets';
 import { buildDresserPlan, enqueueDresserRender, getDressPlan, type DresserStores } from './dresser';
+import { createBatch, getBatchStatus, type BatchStores } from './batch';
 import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
@@ -38,6 +39,7 @@ const canterStores:CanterStores={
   dataDirectory
 };
 const dresserStores:DresserStores={...canterStores,assets:assetStores.assets};
+const batchStores:BatchStores={...dresserStores,batches:new EntityRepository(join(dataDirectory,'entities','batches.json'),batchSchema,'abrxs.batches.v1'),editProject:store.edit.bind(store),getProject:(id:string)=>store.get(id)};
 const jobHandlers=createJobHandlers({...canterStores,assets:assetStores.assets});
 const engine=new JobEngine(jobRepository,jobHandlers,value=>createHash('sha256').update(value).digest('hex'),{
   defaultWatchdogMs:Number(process.env.ABRAXAS_JOB_WATCHDOG_MS||900_000) // 15 min por defecto
@@ -140,6 +142,11 @@ const server=createServer(async(req,res)=>{
         const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');
         send(res,200,analyzeGraph(await store.get(pid)));return;}
       if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
+      if(resource==='batches'){
+        if(req.method==='POST'&&!id){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),count:z.number().int().min(1).max(50).optional(),pieceIds:z.array(z.string().min(1)).min(1).optional(),clientId:z.string().optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de crear el lote.');const profile=input.clientId?await clientStore.get(input.clientId):project.content.clientId?await clientStore.get(project.content.clientId):undefined;const r=await createBatch(batchStores,engine,project,{count:input.count,pieceIds:input.pieceIds,profile:profile??undefined});send(res,201,r);return;}
+        if(req.method==='GET'&&!id){const all=await batchStores.batches.list();send(res,200,{batches:all});return;}
+        if(req.method==='GET'&&id&&action==='status'){const r=await getBatchStatus(batchStores,engine,id);if(!r)throw new NotFoundError('Lote no encontrado.');send(res,200,r);return;}
+      }
       if(resource==='dresser'){
         if(req.method==='POST'&&id==='plan'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),pieceId:z.string().min(1),clientId:z.string().optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de planear.');const profile=input.clientId?await clientStore.get(input.clientId):project.content.clientId?await clientStore.get(project.content.clientId):undefined;send(res,200,await buildDresserPlan({stores:dresserStores,editProject:store.edit.bind(store)},project,{pieceId:input.pieceId,profile:profile??undefined}));return;}
         if(req.method==='GET'&&id==='plan'&&action){send(res,200,{plan:await getDressPlan(dresserStores,action)});return;}
@@ -206,7 +213,7 @@ const server=createServer(async(req,res)=>{
 async function main(){
   const release=await lock();
   try{
-    await projectRepository.init();await jobRepository.init();await clientStore.init();await canterStores.mediaSources.init();await canterStores.pieces.init();await assetStores.assets.init();await store.list();await engine.recover();
+    await projectRepository.init();await jobRepository.init();await clientStore.init();await canterStores.mediaSources.init();await canterStores.pieces.init();await assetStores.assets.init();await batchStores.batches.init();await store.list();await engine.recover();
     server.on('error',async error=>{console.error(error.message);await engine.stop();await release();process.exit(1);});
     server.listen(port,'127.0.0.1',()=>console.log(`AbrxsVAV: http://127.0.0.1:${port} · datos ${dataDirectory}`));
     for(const signal of ['SIGINT','SIGTERM'] as const)process.once(signal,()=>{void engine.stop().then(()=>new Promise<void>(r=>server.close(()=>r()))).then(release).then(()=>process.exit(0));});

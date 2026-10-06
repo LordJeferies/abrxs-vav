@@ -70,6 +70,8 @@ function negated(text:string,rules:string[]):string|undefined{
     por pieza) + dressPlan en piece.extensions + SRT piece-relativo en disco. */
 export async function buildDresserPlan(deps:DresserDeps, project:Project, input:{
   pieceId:string; profile?:ClientProfile;
+  /** AssetIds reservados por OTROS clips del batch (anti-repetición M5). */
+  excludeAssetIds?:string[];
 }): Promise<{ project:Project; plan:DressPlan }>{
   const {stores}=deps;
   const piece=await stores.pieces.get(input.pieceId);
@@ -101,6 +103,7 @@ export async function buildDresserPlan(deps:DresserDeps, project:Project, input:
     const kw=keywords(beat.text).split(' ').filter(Boolean);
     const neg=negated(beat.text,negatives);
     const match=used<cap&&!neg?candidates.find(a=>{
+      if(input.excludeAssetIds?.includes(a.id))return false; // reservado por otro clip del batch
       const tags=((a.extensions as {tags?:string[]})?.tags??[]).map(t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
       return kw.some(k=>tags.includes(k));
     }):undefined;
@@ -111,8 +114,14 @@ export async function buildDresserPlan(deps:DresserDeps, project:Project, input:
         why:`B-roll «${match.label}» por keyword [${hit}] en el beat (${beat.startSec.toFixed(2)}–${beat.endSec.toFixed(2)} s)`});
       brolls.push({assetId:match.id,ref:match.ref,inSec:beat.startSec-pieceIn,outSec:beat.endSec-pieceIn,motion:'ZOOM_IN'});
     }else{
+      const wouldMatch=!neg&&candidates.some(a=>{
+        const tags=((a.extensions as {tags?:string[]})?.tags??[]).map(t=>t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+        return kw.some(k=>tags.includes(k));
+      });
       beats.push({kind:'caption',text:beat.text,startFrame,endFrame,
-        why:neg?`Caption (regla del cliente prohíbe B-roll: "${neg}")`:'Caption (sin asset que matchee las keywords del beat)'});
+        why:neg?`Caption (regla del cliente prohíbe B-roll: "${neg}")`
+          :wouldMatch?'Caption (asset compatible reservado por otro clip del lote — anti-repetición)'
+          :'Caption (sin asset que matchee las keywords del beat)'});
     }
   }
 
