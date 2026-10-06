@@ -6,13 +6,14 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { ProjectStore, JobEngine, ConflictError, NotFoundError } from '@abraxas/core';
-import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema, jobTargetSchema, jobPayloadSchema, mediaSourceSchema, pieceSchema, ABRXS_VERSION } from '@abraxas/contracts';
+import { projectSchema, jobSchema, projectContentSchema, timebaseSchema, clientProfileSchema, jobTargetSchema, jobPayloadSchema, mediaSourceSchema, pieceSchema, assetSchema, ABRXS_VERSION } from '@abraxas/contracts';
 import { FileRepository } from './file-repository';
 import { EntityRepository } from './entity-repository';
 import { parseHttpRange } from './http-range';
 import { createJobHandlers } from './handlers';
 import { catalog } from './catalog';
 import { ingestMaster, createPiece, exportPiece, alignSourceText, createPieceFromText, updatePiece, deletePiece, loadTranscript, type CanterStores } from './canter';
+import { registerAsset, deleteAsset, type AssetStores } from './assets';
 import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
@@ -29,6 +30,7 @@ const projectRepository=new FileRepository(join(dataDirectory,'projects'),projec
 const jobRepository=new FileRepository(join(dataDirectory,'jobs'),jobSchema);
 const store=new ProjectStore(projectRepository);
 const clientStore=new ClientStore(join(dataDirectory,'clients'));
+const assetStores:AssetStores={assets:new EntityRepository(join(dataDirectory,'entities','assets.json'),assetSchema,'abrxs.assets.v1')};
 const canterStores:CanterStores={
   mediaSources:new EntityRepository(join(dataDirectory,'entities','media-sources.json'),mediaSourceSchema,'abrxs.media-sources.v1'),
   pieces:new EntityRepository(join(dataDirectory,'entities','pieces.json'),pieceSchema,'abrxs.pieces.v1'),
@@ -75,6 +77,7 @@ const server=createServer(async(req,res)=>{
         if(req.method==='GET'&&id&&!action){send(res,200,await store.get(id));return;}
         if(req.method==='PUT'&&id&&!action){const input=z.strictObject({revision:z.number().int().nonnegative(),label:z.string().min(1).max(200),content:projectContentSchema}).parse(await body(req));send(res,200,await store.edit(id,input.revision,input.label,input.content));return;}
         if(req.method==='POST'&&id&&(action==='undo'||action==='redo')){const input=revisionSchema.parse(await body(req));send(res,200,await store.travel(id,input.revision,action));return;}
+        if(req.method==='POST'&&id&&action==='client'){const input=z.strictObject({revision:z.number().int().nonnegative(),clientId:z.string().min(1).nullable()}).parse(await body(req));const project=await store.get(id);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de editar.');const content={...project.content,clientId:input.clientId??undefined};send(res,200,await store.edit(id,input.revision,`Cliente: ${input.clientId??'ninguno'}`,content));return;}
       }
       if(resource==='jobs'){
         if(req.method==='GET'&&!id){send(res,200,await engine.list());return;}
@@ -119,6 +122,7 @@ const server=createServer(async(req,res)=>{
         if(req.method==='POST'&&id&&action==='import_txt'){const input=z.strictObject({rawTxt:z.string().min(1)}).parse(await body(req));const before=await clientStore.get(id);if(!before)throw new NotFoundError('Cliente no encontrado.');const draft=parseClientTxt(input.rawTxt,id);const after=applyDraft(before,draft);send(res,200,{draft,diff:diffProfile(before,after)});return;}
         if(req.method==='POST'&&id&&action==='apply_draft'){const input=z.strictObject({profile:clientProfileSchema}).parse(await body(req));const saved=await clientStore.put(input.profile);send(res,200,{profile:saved});return;}
         if(req.method==='POST'&&id&&action==='ai_package'){const input=z.strictObject({rawTxt:z.string().default(''),responseTxt:z.string().default('')}).parse(await body(req));const profile=await clientStore.get(id);const draft=parseClientTxt(input.rawTxt,id);if(input.responseTxt){const aiDraft=importAIResponse(input.responseTxt);const after=applyDraft(profile,draft);send(res,200,{package:exportAIPackage(profile,{...draft,raw:input.rawTxt||aiDraft.raw},{presets:{captions:'caption.amanda.vertical.v1', broll:'documentary_clean'},visualTypes:'ver /api/registries'}),importedDraft:aiDraft,diff:diffProfile(profile,after)});return;}send(res,200,{package:exportAIPackage(profile,draft,{presets:{},visualTypes:'ver /api/registries'})});return;}
+        if(req.method==='POST'&&id&&action==='import_json'){const input=z.strictObject({profile:clientProfileSchema,apply:z.boolean().default(false)}).parse(await body(req));const before=await clientStore.get(id);if(!before)throw new NotFoundError('Cliente no encontrado.');const diff=diffProfile(before,input.profile);if(input.apply)await clientStore.put(input.profile);send(res,200,{diff,applied:input.apply,profile:input.apply?input.profile:undefined});return;}
         if(req.method==='POST'&&id&&action==='ai_import'){const input=z.strictObject({responseTxt:z.string().min(1),apply:z.boolean().default(false)}).parse(await body(req));const before=await clientStore.get(id);if(!before)throw new NotFoundError('Cliente no encontrado.');const aiDraft=importAIResponse(input.responseTxt);const after=applyDraft(before,aiDraft);const diff=diffProfile(before,after);if(input.apply)await clientStore.put(after);send(res,200,{diff,applied:input.apply,profile:input.apply?after:undefined});return;}
       }
       if(resource==='config'&&id==='resolve'&&req.method==='GET'){
@@ -134,6 +138,11 @@ const server=createServer(async(req,res)=>{
         const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');
         send(res,200,analyzeGraph(await store.get(pid)));return;}
       if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
+      if(resource==='assets'){
+        if(req.method==='GET'&&!id){const pid=url.searchParams.get('projectId'),cid=url.searchParams.get('clientId');let all=await assetStores.assets.list();if(pid)all=all.filter(a=>a.projectId===pid);if(cid)all=all.filter(a=>a.clientId===cid);send(res,200,{assets:all});return;}
+        if(req.method==='POST'&&!id){const input=z.strictObject({label:z.string().trim().min(1).max(160),path:z.string().min(1),kind:z.enum(['image','video','audio','font','caption','document','other']).optional(),projectId:z.string().uuid().optional(),clientId:z.string().optional(),provenance:z.strictObject({origin:z.enum(['source_frame','client','stock','ai_image','ai_video','import','download','render','manual']),detail:z.string().optional(),license:z.string().optional()}).optional()}).parse(await body(req));send(res,201,await registerAsset(assetStores,input));return;}
+        if(req.method==='POST'&&id&&action==='delete'){send(res,200,{deleted:await deleteAsset(assetStores,id)});return;}
+      }
       // ── 0.6.0 — M1: vertical real MASTER → MediaSource → Piece → MP4 ──
       if(resource==='canter'){
         if(req.method==='GET'&&id==='transcript'&&action){const source=await canterStores.mediaSources.get(action);if(!source)throw new NotFoundError('MediaSource no encontrada.');send(res,200,await loadTranscript(canterStores,source));return;}
@@ -190,7 +199,7 @@ const server=createServer(async(req,res)=>{
 async function main(){
   const release=await lock();
   try{
-    await projectRepository.init();await jobRepository.init();await clientStore.init();await canterStores.mediaSources.init();await canterStores.pieces.init();await store.list();await engine.recover();
+    await projectRepository.init();await jobRepository.init();await clientStore.init();await canterStores.mediaSources.init();await canterStores.pieces.init();await assetStores.assets.init();await store.list();await engine.recover();
     server.on('error',async error=>{console.error(error.message);await engine.stop();await release();process.exit(1);});
     server.listen(port,'127.0.0.1',()=>console.log(`AbrxsVAV: http://127.0.0.1:${port} · datos ${dataDirectory}`));
     for(const signal of ['SIGINT','SIGTERM'] as const)process.once(signal,()=>{void engine.stop().then(()=>new Promise<void>(r=>server.close(()=>r()))).then(release).then(()=>process.exit(0));});

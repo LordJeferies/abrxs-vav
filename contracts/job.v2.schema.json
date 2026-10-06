@@ -162,6 +162,9 @@
             "events"
           ],
           "additionalProperties": false
+        },
+        "clientId": {
+          "type": "string"
         }
       },
       "required": [

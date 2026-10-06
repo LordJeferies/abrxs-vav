@@ -47,7 +47,13 @@ export const catalog: ActionDefinition[] = [
   { name:'vav.canter.create_piece_from_text', module:'canter', summary:'Crea una Piece desde TEXTO alineado (con ambigüedad devuelve candidates para elegir).', method:'POST', path:'/api/canter/pieces/from_text', destructive:false, requiresOpenProject:true, since:'0.6.0' },
   { name:'vav.canter.get_transcript', module:'canter', summary:'Transcript word-level canónico de un MediaSource (segments + words).', method:'GET', path:'/api/canter/transcript/:id', destructive:false, requiresOpenProject:false, since:'0.6.0' },
   { name:'vav.canter.update_piece', module:'canter', summary:'Actualiza label/rango (frames) de una pieza.', method:'PUT', path:'/api/canter/pieces/:id', destructive:false, requiresOpenProject:true, since:'0.6.0' },
-  { name:'vav.canter.delete_piece', module:'canter', summary:'Elimina una pieza (los MP4 exportados no se borran).', method:'POST', path:'/api/canter/pieces/:id/delete', destructive:true, requiresOpenProject:true, since:'0.6.0' }
+  { name:'vav.canter.delete_piece', module:'canter', summary:'Elimina una pieza (los MP4 exportados no se borran).', method:'POST', path:'/api/canter/pieces/:id/delete', destructive:true, requiresOpenProject:true, since:'0.6.0' },
+  /* ── 0.6.0-M3 — AssetStore + Client Profiles consolidados ── */
+  { name:'vav.assets.list', module:'library', summary:'Assets registrados con provenance/licencia (filtra por projectId/clientId).', method:'GET', path:'/api/assets', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.assets.register', module:'library', summary:'Registra un archivo como Asset (hash streaming, kind por extensión; idempotente por ref+hash).', method:'POST', path:'/api/assets', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.assets.delete', module:'library', summary:'Elimina el registro de un asset (el archivo en disco no se borra).', method:'POST', path:'/api/assets/:id/delete', destructive:true, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.clients.import_json', module:'clients', summary:'Importa/valida un ClientProfile JSON completo con diff (apply:true aplica).', method:'POST', path:'/api/clients/:id/import_json', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.projects.set_client', module:'hub', summary:'Vincula (o desvincula con null) un cliente al proyecto vía CAS por revisión.', method:'POST', path:'/api/projects/:id/client', destructive:false, requiresOpenProject:true, since:'0.6.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */

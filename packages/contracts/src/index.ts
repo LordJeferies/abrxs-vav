@@ -13,7 +13,7 @@ export type Timebase = z.infer<typeof timebaseSchema>;
 export type ProductionEvent = z.infer<typeof eventSchema>;
 export type ProductionGraph = z.infer<typeof graphSchema>;
 export type ProductionEventKind = ProductionEvent['kind'];
-export const projectContentSchema = z.strictObject({ name: z.string().trim().min(1).max(160), graph: graphSchema });
+export const projectContentSchema = z.strictObject({ name: z.string().trim().min(1).max(160), graph: graphSchema, clientId: z.string().optional() });
 export type ProjectContent = z.infer<typeof projectContentSchema>;
 export const operationSchema = z.strictObject({ id:z.string(), label:z.string(), timestamp:z.string(), before:projectContentSchema, after:projectContentSchema });
 export const projectSchema = z.strictObject({
@@ -21,6 +21,39 @@ export const projectSchema = z.strictObject({
   history:z.strictObject({ undo:z.array(operationSchema).max(100), redo:z.array(operationSchema).max(100) })
 }).refine(p => p.id === p.content.graph.projectId && [...p.history.undo, ...p.history.redo].every(o => o.before.graph.projectId === p.id && o.after.graph.projectId === p.id), {message:'El graph y su historial deben pertenecer al proyecto.'});
 export type Project = z.infer<typeof projectSchema>;
+/* ═══ ABRXSVAV v2.6 — ASSET STORE (M3): el registro canónico de materiales ═══
+   Assets = imágenes/videos/audios/fuentes/captions/documents reutilizables con
+   provenance y licencia. ref opaca; el binario vive en disco (jamás en el JSON).
+   Los AssetSlot del Visual Plan resuelven contra estos ids (resolvedAssetId). */
+export const assetKindSchema = z.enum(['image','video','audio','font','caption','document','other']);
+export type AssetKind = z.infer<typeof assetKindSchema>;
+export const assetProvenanceSchema = z.strictObject({
+  origin: z.enum(['source_frame','client','stock','ai_image','ai_video','import','download','render','manual']),
+  detail: z.string().optional(),   // provider, query de stock, URL de origen…
+  license: z.string().optional()   // si aplica (stock/client)
+});
+export type AssetProvenance = z.infer<typeof assetProvenanceSchema>;
+export const assetSchema = z.strictObject({
+  schemaVersion: z.literal('abrxs.asset.v1'),
+  id: z.string().min(1).max(120),
+  label: z.string().trim().min(1).max(160),
+  kind: assetKindSchema,
+  ref: z.string().min(1),
+  hash: z.string().min(8).max(128).optional(),
+  hashAlgorithm: z.enum(['sha256']).optional(),
+  sizeBytes: z.number().int().nonnegative().optional(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+  durationFrames: z.number().int().nonnegative().optional(),
+  timebase: timebaseSchema.optional(),
+  projectId: z.string().optional(),   // scope del asset (ausente = global)
+  clientId: z.string().optional(),    // asset de marca del cliente
+  provenance: assetProvenanceSchema,
+  createdAt: z.string(),
+  extensions: z.record(z.string(), z.unknown()).optional()
+});
+export type Asset = z.infer<typeof assetSchema>;
+
 /* v2.5 (0.5.1): objetivo explícito del job — qué procesa, nunca "el primer evento compatible". */
 export const jobTargetKindSchema = z.enum(['project','piece','event','asset','media_source']);
 export type JobTargetKind = z.infer<typeof jobTargetKindSchema>;
@@ -175,6 +208,9 @@ export const clientProfileSchema = z.strictObject({
   broll: z.strictObject({ preset: z.string().default('documentary_clean'), density: z.enum(['low','medium','high']).default('medium'), sourcePriority: sourcePrioritySchema }).prefault({}),
   xroll: z.strictObject({ density: z.enum(['off','low','medium']).default('low'), allowed: z.array(z.string()).default([]) }).prefault({}),
   sfx: z.strictObject({ preset: z.string().default('subtle') }).prefault({}),
+  voice: z.string().optional(),                     // voz/tono del cliente (M3)
+  audience: z.string().optional(),                  // audiencia objetivo (M3)
+  logos: z.array(z.strictObject({ label: z.string().min(1), ref: z.string().min(1) })).default([]), // refs a assets, jamás binarios
   glossary: z.array(z.strictObject({ term: z.string(), canonical: z.string().optional(), dontTranslate: z.boolean().default(false) })).default([]),
   negativeRules: z.array(z.string()).default([]),                // "no estética futurista"
   editorialRules: z.array(z.string()).default([]),               // "no B-roll en los primeros 3s"

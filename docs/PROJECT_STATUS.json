@@ -4,13 +4,13 @@
   "stableBranch": "main",
   "developmentBranch": "dev/vav-complete",
   "currentVersion": "0.6.0",
-  "currentMilestone": "M2 — Canter completo (transcripción + alignment + UI) — REAL",
-  "currentTask": "M2 cerrado y en PR #4 (revisión/integración); siguiente milestone M3",
-  "nextAction": "M3: AssetStore canónico (assets source/generated/client con provenance) y consolidación Client Profiles",
-  "updatedAt": "2026-10-05T21:16:52.000Z",
+  "currentMilestone": "M3 — AssetStore canónico + Client Profiles consolidados — REAL (servicio/API/MCP)",
+  "currentTask": "M3 integrado; siguiente M4: Dresser MVP (Piece+Transcript+ClientProfile → Visual Plan → captions → MP4)",
+  "nextAction": "M4: Dresser MVP — visual plan determinista sobre transcript, B-roll local/captions SRT, renderFinal, E2E",
+  "updatedAt": "2026-10-06T02:17:40.000Z",
   "tests": {
-    "total": 142,
-    "passing": 142,
+    "total": 152,
+    "passing": 152,
     "failing": 0
   },
   "ci": "green (GitHub Actions: check + test + build)",
@@ -26,7 +26,8 @@
     "geometra": "PENDING",
     "brandCreator": "PARTIAL",
     "builder": "PENDING",
-    "canvases": "PENDING"
+    "canvases": "PENDING",
+    "library": "PARTIAL"
   },
   "milestones": [
     {
@@ -42,6 +43,11 @@
     {
       "id": "M2",
       "name": "transcripción local word-level + Canter completo (UI incluida)",
+      "status": "REAL"
+    },
+    {
+      "id": "M3",
+      "name": "AssetStore + Client Profiles consolidados",
       "status": "REAL"
     },
     {
@@ -66,6 +72,7 @@
     "0.5.1: SHA streaming, filmstrip uniforme, paths hostiles, Doctor media con decode mpeg4 independiente de H264",
     "0.6.0: vertical real MASTER→ingest→C01→MP4 E2E con reopen (proyecto+source+pieza+outputs persisten)",
     "0.6.0-M2a: media.transcribe REAL — mlx_whisper word-level JSON canónico + SRT/TXT derivados + cache por hash; paridad MCP 35↔35",
-    "0.6.0-M2b: text→Piece (align exact/normalized/anchors/fuzzy con gating) + UI Canter completa + streaming Range seguro + Doctor whisper honesto; paridad MCP 40↔40"
+    "0.6.0-M2b: text→Piece (align exact/normalized/anchors/fuzzy con gating) + UI Canter completa + streaming Range seguro + Doctor whisper honesto; paridad MCP 40↔40",
+    "0.6.0-M3: AssetStore canónico (hash streaming, idempotente por ref+hash, ids sin reciclar, provenance/licencia) + ClientProfile v1.1 (voice/audience/logos) + import JSON + vínculo proyecto→cliente por CAS; paridad MCP 45↔45"
   ]
 }
