@@ -1,6 +1,19 @@
 # AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
 
-> Última actualización: 2026-10-05 (v0.6.0-M2b — Canter completo; PR #4 abierto hacia dev/vav-complete; 142/142)
+> Última actualización: 2026-10-05 (v0.6.0-M4 — Dresser MVP integrado; dev/vav-complete @ f169001; 158/158)
+
+## -4. ESTADO TRAS M4 (2026-10-05) — milestone M5 BATCH 20
+
+- Mergeados hoy en dev/vav-complete: M0 (0.5.1 hardening) → M1 (vertical
+  MASTER→C01→MP4) → M2 (Canter: transcribe mlx + text→Piece + UI) → M3
+  (AssetStore + ClientProfiles) → M4 (Dresser MVP: plan determinista + render
+  vestido 1080x1920 con b-roll/captions).
+- SIGUIENTE ACCIÓN: M5 BATCH 20 — cola de N piezas con anti-repetición de
+  b-rolls (sorteo determinista por hash) y render en lote (queue/pause/resume/
+  backpressure del JobEngine). Rama feature/m5-batch desde dev/vav-complete.
+- Notas M4: renderFinal ahora escala la base a 1080x1920 (bug corregido); el
+  matcher de keywords normaliza acentos en tags; dresser UI = PENDING (el
+  módulo es servicio/API/MCP).
 
 ## -3. ESTADO DE INTEGRACIÓN M2 (2026-10-05)
 
