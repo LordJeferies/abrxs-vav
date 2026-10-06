@@ -14,6 +14,7 @@ import { createJobHandlers } from './handlers';
 import { catalog } from './catalog';
 import { ingestMaster, createPiece, exportPiece, alignSourceText, createPieceFromText, updatePiece, deletePiece, loadTranscript, type CanterStores } from './canter';
 import { registerAsset, deleteAsset, type AssetStores } from './assets';
+import { buildDresserPlan, enqueueDresserRender, getDressPlan, type DresserStores } from './dresser';
 import { enhancePrompt, buildHandoff, type EnhanceOptions } from '@abraxas/prompts';
 import { providerStatus, testConnection } from './providers';
 import { registries } from './registries';
@@ -36,7 +37,8 @@ const canterStores:CanterStores={
   pieces:new EntityRepository(join(dataDirectory,'entities','pieces.json'),pieceSchema,'abrxs.pieces.v1'),
   dataDirectory
 };
-const jobHandlers=createJobHandlers(canterStores);
+const dresserStores:DresserStores={...canterStores,assets:assetStores.assets};
+const jobHandlers=createJobHandlers({...canterStores,assets:assetStores.assets});
 const engine=new JobEngine(jobRepository,jobHandlers,value=>createHash('sha256').update(value).digest('hex'),{
   defaultWatchdogMs:Number(process.env.ABRAXAS_JOB_WATCHDOG_MS||900_000) // 15 min por defecto
 });
@@ -138,6 +140,11 @@ const server=createServer(async(req,res)=>{
         const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');
         send(res,200,analyzeGraph(await store.get(pid)));return;}
       if(resource==='coach'&&id==='plan'&&req.method==='GET'){const pid=url.searchParams.get('projectId');if(!pid)throw new Error('Falta projectId.');const target=url.searchParams.get('target');send(res,200,buildCoachPlan(await store.get(pid),target==='capcut'||target==='davinci'?target:'any'));return;}
+      if(resource==='dresser'){
+        if(req.method==='POST'&&id==='plan'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),pieceId:z.string().min(1),clientId:z.string().optional()}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de planear.');const profile=input.clientId?await clientStore.get(input.clientId):project.content.clientId?await clientStore.get(project.content.clientId):undefined;send(res,200,await buildDresserPlan({stores:dresserStores,editProject:store.edit.bind(store)},project,{pieceId:input.pieceId,profile:profile??undefined}));return;}
+        if(req.method==='GET'&&id==='plan'&&action){send(res,200,{plan:await getDressPlan(dresserStores,action)});return;}
+        if(req.method==='POST'&&id==='render'&&!action){const input=z.strictObject({projectId:z.string().uuid(),revision:z.number().int().nonnegative(),pieceId:z.string().min(1)}).parse(await body(req));const project=await store.get(input.projectId);if(project.revision!==input.revision)throw new ConflictError('Recarga el proyecto antes de renderizar.');send(res,201,{job:await enqueueDresserRender(dresserStores,engine,project,input.pieceId)});return;}
+      }
       if(resource==='assets'){
         if(req.method==='GET'&&!id){const pid=url.searchParams.get('projectId'),cid=url.searchParams.get('clientId');let all=await assetStores.assets.list();if(pid)all=all.filter(a=>a.projectId===pid);if(cid)all=all.filter(a=>a.clientId===cid);send(res,200,{assets:all});return;}
         if(req.method==='POST'&&!id){const input=z.strictObject({label:z.string().trim().min(1).max(160),path:z.string().min(1),kind:z.enum(['image','video','audio','font','caption','document','other']).optional(),projectId:z.string().uuid().optional(),clientId:z.string().optional(),provenance:z.strictObject({origin:z.enum(['source_frame','client','stock','ai_image','ai_video','import','download','render','manual']),detail:z.string().optional(),license:z.string().optional()}).optional()}).parse(await body(req));send(res,201,await registerAsset(assetStores,input));return;}

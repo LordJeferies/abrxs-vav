@@ -1,5 +1,25 @@
 # Cambios
 
+## AbrxsVAV 0.6.0-M4 · 2026-10-05 (Dresser MVP)
+
+- **Visual Director determinista** (`apps/service/src/dresser.ts`): beats del
+  transcript word-level de la pieza (puntuación / cap de 12 palabras) → keywords
+  es/en → match contra tags de assets registrados → B-ROLL (con WHY por beat) o
+  caption. Reglas del cliente: broll.density (low/medium/high = 1/2/4 por pieza)
+  y negativeRules (keyword prohibida → caption). Matcher normaliza acentos en
+  ambos lados.
+- **Eventos persistentes en el grafo** por CAS (idempotente por pieza): eventos
+  b_roll/caption con frames absolutos out-exclusivos + dressPieceId + why.
+- **Render vestido** (`dresser.render_piece`): b-roll zoompan + captions quemadas
+  sobre el corte real vía renderFinal — dressPlan persistido en la pieza (el
+  handler ejecuta sin re-decidir). Re-render soportado (payload renderNumber).
+- **BUG corregido en renderFinal**: la base no se escalaba al lienzo vertical —
+  un máster no-1080x1920 salía con b-rolls/captions fuera de cuadro (funcionaba
+  solo con másteres ya verticales). Ahora [0:v] escala/croppea a 1080x1920
+  siempre que haya overlays/captions.
+- Acciones vav.dresser.plan/get_plan/render + MCP ×3 → paridad **48↔48**.
+  Tests 152 → **158**.
+
 ## AbrxsVAV 0.6.0-M3 · 2026-10-05 (AssetStore + Client Profiles consolidados)
 
 - **AssetStore canónico** (contracts v2.6 `abrxs.asset.v1` + `apps/service/src/assets.ts`):

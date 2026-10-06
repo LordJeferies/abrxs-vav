@@ -4,13 +4,13 @@
   "stableBranch": "main",
   "developmentBranch": "dev/vav-complete",
   "currentVersion": "0.6.0",
-  "currentMilestone": "M3 — AssetStore canónico + Client Profiles consolidados — REAL (servicio/API/MCP)",
-  "currentTask": "M3 integrado; siguiente M4: Dresser MVP (Piece+Transcript+ClientProfile → Visual Plan → captions → MP4)",
-  "nextAction": "M4: Dresser MVP — visual plan determinista sobre transcript, B-roll local/captions SRT, renderFinal, E2E",
-  "updatedAt": "2026-10-06T02:17:40.000Z",
+  "currentMilestone": "M4 — Dresser MVP (visual plan determinista + b-roll + captions + render) — REAL",
+  "currentTask": "M4 integrado; siguiente M5: Batch 20 (queue/pause/backpressure) con el vertical completo",
+  "nextAction": "M5: Batch 20 — análisis/plan de N piezas en cola, anti-repetición de b-rolls, render en lote",
+  "updatedAt": "2026-10-06T03:14:34.000Z",
   "tests": {
-    "total": 152,
-    "passing": 152,
+    "total": 158,
+    "passing": 158,
     "failing": 0
   },
   "ci": "green (GitHub Actions: check + test + build)",
@@ -18,7 +18,7 @@
   "modules": {
     "core": "REAL",
     "canter": "REAL",
-    "dresser": "PENDING",
+    "dresser": "PARTIAL",
     "visualLab": "PARTIAL",
     "review": "PENDING",
     "delivery": "PENDING",
@@ -51,6 +51,11 @@
       "status": "REAL"
     },
     {
+      "id": "M4",
+      "name": "Dresser MVP",
+      "status": "REAL"
+    },
+    {
       "id": "M3",
       "name": "AssetStore + Client Profiles consolidados",
       "status": "PENDING"
@@ -73,6 +78,7 @@
     "0.6.0: vertical real MASTER→ingest→C01→MP4 E2E con reopen (proyecto+source+pieza+outputs persisten)",
     "0.6.0-M2a: media.transcribe REAL — mlx_whisper word-level JSON canónico + SRT/TXT derivados + cache por hash; paridad MCP 35↔35",
     "0.6.0-M2b: text→Piece (align exact/normalized/anchors/fuzzy con gating) + UI Canter completa + streaming Range seguro + Doctor whisper honesto; paridad MCP 40↔40",
-    "0.6.0-M3: AssetStore canónico (hash streaming, idempotente por ref+hash, ids sin reciclar, provenance/licencia) + ClientProfile v1.1 (voice/audience/logos) + import JSON + vínculo proyecto→cliente por CAS; paridad MCP 45↔45"
+    "0.6.0-M3: AssetStore canónico (hash streaming, idempotente por ref+hash, ids sin reciclar, provenance/licencia) + ClientProfile v1.1 (voice/audience/logos) + import JSON + vínculo proyecto→cliente por CAS; paridad MCP 45↔45",
+    "0.6.0-M4: Dresser MVP — Visual Director determinista (beats del transcript, keywords→tags, densidad/negativas del cliente, WHY por beat) + eventos en el grafo por CAS + render vestido 1080x1920 con b-roll zoompan y captions quemadas; bug de base-sin-escalar en renderFinal corregido"
   ]
 }

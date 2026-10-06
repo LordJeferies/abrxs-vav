@@ -64,10 +64,15 @@
         media.ingest (MediaSource + probe/hash streaming + proxy/filmstrip/waveform)
         → canter.create_piece por FRAMES → canter.export_piece (corte real MP4)
         → reopen: proyecto+source+pieza+outputs persisten. E2E con máster sintético.
-  [ ] PASO 2/M2 — TRANSCRIPCIÓN + CANTER COMPLETO  ← ← ← SIGUIENTE ACCIÓN
-        whisper-cli/mlx_whisper (binarios detectados en este Mac) → word-level JSON
-        canónico; texto → rango de pieza; import SRT/TXT existente; UI de piezas.
-        Salida: máster real → 10 piezas en el grafo, exportadas limpias.
+  [x] M2/M3/M4 (2026-10-05) — CANTER COMPLETO + ASSETSTORE + DRESSER MVP ✅
+        Transcripción local word-level (mlx_whisper, cache) · piezas por TEXTO
+        (alignment determinista) · UI Canter · AssetStore canónico · ClientProfile
+        v1.1 + vínculo proyecto→cliente · Dresser MVP (visual plan determinista
+        con WHY, b-roll por keywords, captions quemadas, render 1080x1920).
+        Salida verificada: máster → pieza → plan → MP4 vestido E2E.
+  [ ] M5 — BATCH 20  ← ← ← SIGUIENTE ACCIÓN
+        Cola de N piezas con anti-repetición de b-rolls y render en lote
+        (queue/pause/resume/backpressure del JobEngine).
   [ ] PASO 3 — Vistas compartidas (Lista/Kanban/Mapa XYFlow).
   [ ] PASO 4 — Companion PWA v1 (GitHub Pages) + canal de comandos tipados
         + Supabase (workspace abrxs-vav, tablas vav_state/vav_commands).
