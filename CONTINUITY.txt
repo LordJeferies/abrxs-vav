@@ -1,16 +1,15 @@
 # AbrxsVAV — CONTINUITY.txt (dev + soporte técnico)
 
-> Última actualización: 2026-10-05 (v0.6.0-M2a — M1 vertical REAL + M2 slice transcripción local, ambos en dev/vav-complete @ 9547112)
+> Última actualización: 2026-10-05 (v0.6.0-M2b — Canter completo; PR #4 abierto hacia dev/vav-complete; 142/142)
 
-## -3. BLOCKED ACTUAL (2026-10-05): VERIFICAR EMAIL EN GITHUB
+## -3. ESTADO DE INTEGRACIÓN M2 (2026-10-05)
 
-- git push / creación de PRs → 403 "At least one email address must be verified"
-  (el REST Git Data API para CREAR contenido también está bloqueado; solo refs).
-- ACCIÓN HUMANA: https://github.com/settings/emails → verificar email → después:
-  git push -u origin feature/m2-canter-complete
-  gh pr create --base dev/vav-complete --head feature/m2-canter-complete → revisar → merge.
-- TRABAJO SEGURO EN LOCAL (feature/m2-canter-complete, suite verde):
-  hardening align/floor-ceil/media-streaming + UI Canter + doctor whisper + docs M2.
+- Email de GitHub verificado (el bloqueo de push/PR quedó resuelto).
+- Rama feature/m2-canter-complete subida; PR #4 abierto → dev/vav-complete.
+- M2 listo para integración: transcribe word-level + text→Piece + UI Canter +
+  streaming seguro + Doctor whisper. 142/142 tests; paridad MCP 40↔40.
+- SIGUIENTE ACCIÓN: merge de PR #4 → M3 AssetStore + Client Profiles (rama
+  nueva desde dev/vav-complete; no seguir sobre la rama de M2).
 
 ## -2. SIGUIENTE SESIÓN (M2 continúa)
 

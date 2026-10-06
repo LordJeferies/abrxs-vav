@@ -5,7 +5,7 @@
   "developmentBranch": "dev/vav-complete",
   "currentVersion": "0.6.0",
   "currentMilestone": "M2 — Canter completo (transcripción + alignment + UI) — REAL",
-  "currentTask": "M2 cerrado; siguiente M3: AssetStore + Client Profiles consolidados",
+  "currentTask": "M2 cerrado y en PR #4 (revisión/integración); siguiente milestone M3",
   "nextAction": "M3: AssetStore canónico (assets source/generated/client con provenance) y consolidación Client Profiles",
   "updatedAt": "2026-10-05T21:16:52.000Z",
   "tests": {
@@ -60,12 +60,7 @@
       "status": "PENDING"
     }
   ],
-  "blockers": [
-    {
-      "id": "github-email-verification",
-      "detail": "git push y creación de PRs bloqueados por GitHub (403 'email address must be verified'). ACCIÓN HUMANA: verificar email en https://github.com/settings/emails. Todo el trabajo M2 está commiteado LOCALMENTE en feature/m2-canter-complete — tras verificar: git push -u origin feature/m2-canter-complete; gh pr create --base dev/vav-complete; merge."
-    }
-  ],
+  "blockers": [],
   "recentAchievements": [
     "0.5.1: Piece/MediaSource/Job target, timebase racional con drop-frame, versión única ABRXS_VERSION, paridad MCP 29↔29",
     "0.5.1: SHA streaming, filmstrip uniforme, paths hostiles, Doctor media con decode mpeg4 independiente de H264",
