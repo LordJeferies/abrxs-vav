@@ -57,7 +57,11 @@ export const catalog: ActionDefinition[] = [
   /* ── 0.6.0-M4 — Dresser MVP ── */
   { name:'vav.dresser.plan', module:'dresser', summary:'Visual Director determinista: beats del transcript + keywords + reglas del cliente → eventos b_roll/caption en el grafo (CAS) + dressPlan.', method:'POST', path:'/api/dresser/plan', destructive:false, requiresOpenProject:true, since:'0.6.0' },
   { name:'vav.dresser.get_plan', module:'dresser', summary:'Plan de Dresser persistido de una pieza (beats con WHY, brolls, captions).', method:'GET', path:'/api/dresser/plan/:id', destructive:false, requiresOpenProject:false, since:'0.6.0' },
-  { name:'vav.dresser.render', module:'dresser', summary:'Encola el render VESTIDO de la pieza (b-roll zoompan + captions quemadas sobre el corte real).', method:'POST', path:'/api/dresser/render', destructive:false, requiresOpenProject:true, since:'0.6.0' }
+  { name:'vav.dresser.render', module:'dresser', summary:'Encola el render VESTIDO de la pieza (b-roll zoompan + captions quemadas sobre el corte real).', method:'POST', path:'/api/dresser/render', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  /* ── 0.6.0-M5 — Batch ── */
+  { name:'vav.batches.create', module:'dresser', summary:'Crea un lote: auto-piezas desde el máster (count) o pieceIds, plan con anti-repetición de b-rolls y render jobs en cola.', method:'POST', path:'/api/batches', destructive:false, requiresOpenProject:true, since:'0.6.0' },
+  { name:'vav.batches.list', module:'dresser', summary:'Lotes registrados del servicio.', method:'GET', path:'/api/batches', destructive:false, requiresOpenProject:false, since:'0.6.0' },
+  { name:'vav.batches.status', module:'dresser', summary:'Estado CALCULADO de un lote desde sus jobs (completed/partial/failed/running).', method:'GET', path:'/api/batches/:id/status', destructive:false, requiresOpenProject:false, since:'0.6.0' }
 ];
 
 /** Ruteo inverso: dado un nombre vav.* y parámetros, produce método/ruta concretos. */
