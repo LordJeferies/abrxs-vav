@@ -1,5 +1,18 @@
 # Cambios
 
+## AbrxsVAV 0.6.0-M3 · 2026-10-05 (AssetStore + Client Profiles consolidados)
+
+- **AssetStore canónico** (contracts v2.6 `abrxs.asset.v1` + `apps/service/src/assets.ts`):
+  registro de archivos reales con hash STREAMING, kind por extensión, provenance
+  (origin/detail/license), scope projectId/clientId. Registro IDEMPOTENTE por ref+hash
+  e **ids sin reciclar** (max+1 — una referencia huérfana jamás apunta al asset nuevo).
+  Acciones vav.assets.list/register/delete + MCP ×3.
+- **ClientProfile v1.1** (aditivo): voice, audience, logos (refs a assets, jamás
+  binarios). Import JSON validado con diff (`vav.clients.import_json` + MCP).
+- **Vínculo proyecto→cliente**: `projectContent.clientId` (aditivo) + acción
+  `vav.projects.set_client` con CAS por revisión + MCP.
+- Paridad MCP **45↔45**. Tests 142 → **152**.
+
 ## AbrxsVAV 0.6.0-M2b · 2026-10-05 (M2 cerrado: Canter completo con UI)
 
 - **UI Canter real** (Canter.tsx): viewer de máster por PROXY con streaming
