@@ -1,92 +1,112 @@
-# PROMPT MAESTRO — siguiente sesión de desarrollo de AbrxsVAV
+# NEXT_SESSION_PROMPT — CONTINUAR Y TERMINAR ABRXSVAV (autónomo, hito a hito)
 
-> Copia TODO este bloque y pégalo como primer mensaje del chat nuevo.
-> Actualizado: 2026-10-05 · repo en `f04b12d` · 32/32 tests · app verificada instalable.
+> Sesión de origen: ZCode 2026-10-05/06 (M0–M6 integrados). Pega esto en un agente
+> nuevo (Claude Code / ZCode) tal cual, o pídele solo: «Lee NEXT_SESSION_PROMPT.md
+> en dev/vav-complete y ejecútalo».
 
----
+## REPOSITORIO Y ESTADO
+- Repo: https://github.com/LordJeferies/abrxs-vav
+- Rama de integración: **dev/vav-complete** (HEAD esperado ≥ 26877d3) · `main` = estable, NO tocar.
+- Copia local existente: /Users/lordjef/dev/abrxs-vav (si no existe, clona).
+- GitHub CLI autenticado como LordJeferies (email verificado — push funciona).
+- Versión 0.6.0 · 174/174 tests · doctor exit 0 · paridad MCP 55↔55 · CI verde.
 
-Estás continuando el desarrollo de **AbrxsVAV** (Video · Audio · Visual, familia
-"Abraxas", de LordJeferies): una app de escritorio para producir contenido de calidad
-de cine desde tu Mac. La idea maestra: **una MoneyPrinterTurbo con esteroides y con
-control humano** — toma un video largo o un guion, lo corta en piezas, las viste con
-imágenes/animaciones/subtítulos de calidad profesional, genera prompts para
-cualquier IA de imagen/video, y entrega MP4 finales o kits para CapCut/DaVinci.
-Diferencias clave con MoneyPrinter: NO es un generador opaco (la IA propone, el
-humano aprueba — HITL), NO reinterpreta tu guion (tu corte manda), es modular por
-registries (agregar un tipo nuevo = datos, no código), todo es operable por MCP
-(la app entera es un "MCP de edición de video" al estilo del MCP de DaVinci), y
-tiene un sistema de Client Profiles para que la marca de cada cliente se respete.
+## 0. REGLA PRINCIPAL
+Avanza AUTÓNOMAMENTE milestone por milestone:
+IMPLEMENTAR → TESTEAR → DOCS → PROJECT_STATUS → COMMIT → PR → CI verde → MERGE a dev/vav-complete → SIGUIENTE.
+NO te detengas a preguntar. NO toques main (solo el PR final M19). NO reinicies arquitectura. NO repitas lo hecho.
+Solo detente ante bloqueo REAL (credencial/hardware/aprobación humana); documéntalo como BLOCKED en
+docs/PROJECT_STATUS.json (blockers) y continúa con lo demás.
 
-## 1. Estado verificado (todo esto es REAL, probado con E2E)
+## 1. INSPECCIÓN OBLIGATORIA (antes de tocar nada)
+git fetch origin && git checkout dev/vav-complete && git pull --ff-only
+Comprueba HEAD/CI/working tree. Luego: npm ci && npm run check && npm test && npm run test:media && npm run build && npm run doctor
+Lee: CONTINUITY.txt, ROADMAP.txt, docs/PROJECT_STATUS.json, docs/IMPLEMENTATION_STATUS.md, CHANGELOG.md, AGENTS.md.
+EL CÓDIGO ACTUAL MANDA sobre los docs si difieren.
 
-- Repo: https://github.com/LordJeferies/abrxs-vav · 32/32 tests · check/build verdes.
-- **App corriendo**: `git clone` + `./INSTALL_MAC.command` → http://127.0.0.1:4317
-  (verificado con instalación fresca). Shell React con 11 estaciones, ⌘K, undo/redo.
-- **Core real**: ProjectStore (escrituras atómicas, CAS por revisión, .bak), JobEngine
-  (serial, watchdog 15min, recuperación post-crash), 6 registries
-  (`/api/registries`: XR 7 · SFX 13 · motion 10 · captions 4 · packs 3 · treatments 9),
-  ActionCatalog de 29 acciones (`/api/catalog`), MCP stdio de 28 tools (`mcp/server.mjs`).
-- **Client Profiles** (contracts v2.4 + `apps/service/src/clients.ts`): cadena
-  System→Client→Project→Video→Event con fuente por valor, tokens $colors.*,
-  import TXT con confianza high/medium, AI Package de 8 archivos, import de respuesta
-  "ABRXS CLIENT PROFILE v1" con diff antes de aplicar.
-- **Prompt Studio** (`packages/prompts`): sujeto INTACTO + capas de cine por
-  intensidad 1-3 + HandoffPackage para CUALQUIER IA. Providers: Higgsfield
-  (POST→request_id→poll real, falta validar con key), NVIDIA NIM (imágenes), Demo
-  (pipeline completo sin claves).
-- **Motion Composer** (`packages/motion`): capas con imágenes → keyframes
-  deterministas (10 presets canon R6, zoom ≤1.18, ease-in-out) → RenderSpec JSON
-  Remotion-ready + comandos FFmpeg zoompan. Rangos del editor soportados.
-- **Modo Coach** (`/api/coach/plan`): grafo → plan de montaje paso a paso para
-  CapCut/DaVinci. **QA estructural** (`/api/qa/analyze`). **LiquidGlass real** en la
-  shell (styles.css, capa UI). Corpus sintético de CI. Sitio PWA:
-  https://lordjeferies.github.io/abrxsvavstatus/
-- **`apps/service/src/media.ts` ESCRITO PERO SIN WIRE** (10KB): ffprobe, proxy 540p,
-  filmstrip, waveform, parseSrt/Vtt/Txt, sliceSrt, keywords, cutPiece (re-encode
-  frame-accurate), renderFinal (corte + B-rolls Ken Burns fullscreen zoompan +
-  subtitles burn con force_style del cliente). **ESTE ES EL TRABAJO INMEDIATO.**
+## 2. HECHO (M0–M6) — capacidades REALES verificadas E2E
+- **0.5.1/M0**: Piece/MediaSource/Job target explícito, timebase racional + drop-frame SMPTE,
+  versión única ABRXS_VERSION, SHA streaming, filmstrip uniforme, paths hostiles (escape
+  filtergraph doble backslash), Doctor media (ffmpeg/ffprobe/decode mpeg4/H264/whisper honesto).
+- **M1**: vertical real MASTER→ingest→C01→MP4 (EntityRepository JSON atómico, media.ingest con
+  probe fps racional + derivados, canter.create_piece por frames, canter.export_piece real).
+- **M2**: media.transcribe (mlx_whisper word-level canónico + SRT/TXT + cache por hash),
+  text→Piece (align exact/normalized/anchors/fuzzy + decideAlignment con gating), UI Canter.
+- **M3**: AssetStore canónico (idempotente por ref+hash, ids sin reciclar, provenance/licencia),
+  ClientProfile v1.1 (voice/audience/logos), projectContent.clientId + set_client CAS.
+- **M4**: Dresser MVP (beats del transcript → keywords→tags → b-roll con WHY o caption;
+  densidad/negativas del cliente; eventos en grafo por CAS idempotentes; render vestido 1080x1920).
+- **M5**: Batch (auto-piezas por partición entera, anti-repetición de b-rolls por excludeAssetIds,
+  JobEngine.pause/resume cooperativo, estado de lote CALCULADO de los jobs).
+- **M6**: Visual Lab v1 (searchAssets scoring determinista, grabFrame con escalera de seeks,
+  similarAssets, attachAssetToEvent CAS con WHY).
 
-## 2. Tu primera tarea — wire del pipeline (ver CONTINUITY.txt §F)
+## 3. REGLAS INVIOlABLES
+1. Production Graph = única verdad audiovisual. Nada de timelines paralelos.
+2. Tiempo canónico: frames enteros out-exclusivos + timebase RACIONAL. Segundos SOLO en la
+   frontera FFmpeg/UI. Límites de clip: floor al abrir, ceil al cerrar.
+3. Toda operación nueva converge en ActionCatalog (apps/service/src/catalog.ts) + handler + route +
+   MCP tool + test de paridad (55↔55 hoy; crece siempre 1:1). MCP no implementa lógica.
+4. Versiones: ABRXS_VERSION (packages/contracts/src/version.ts) única fuente; bump solo al cerrar
+   milestone (9 manifests + tauri.conf); tests/version.test.ts lo exige.
+5. Repos con cache en memoria = SINGLE-WRITER (el servicio escribe); los tests E2E HTTP siembran
+   entidades ANTES de arrancar el server.
+6. Handlers con deps inyectadas (createJobHandlers(deps)); jobs con target EXPLÍCITO; fingerprint
+   legacy {kind,revision,content} cuando no hay target/payload (compat pre-0.5.1, con test).
+7. Sin secretos en git/JSON/logs. Escritura atómica (atomicWrite). Nunca cargar un máster en RAM.
 
-1. Handlers: `canter.ingest`, `canter.export_piece`, `dresser.render_piece`
-   (patrón igual a `media.generate` en handlers.ts).
-2. Rutas sync con CAS: `POST /api/canter/ingest` (probe + evento MASTER con
-   extensions.media + job de proxy), `/api/canter/transcript_import`,
-   `/api/canter/cut` (piezas con extensions.source {masterEventId,startSec,endSec}),
-   `/api/dresser/plan` (reglas: transcript slice + densidad del client profile →
-   ghost b_rolls con stockQuery=keywords), `/api/dresser/render`.
-3. UI funcional (patrón VisualStudio.tsx): **Canter** (ingest por ruta → filmstrip →
-   import transcript → cortar piezas → export con "Reveal in Finder"),
-   **Dresser** (plan visual por pieza → render final), **Clients wizard** (form).
-4. MCP +4 tools. Tests de parseSrt/keywords/plan. E2E con video sintético:
-   `ffmpeg -f lavfi -i testsrc=duration=60:size=1080x1920 -f lavfi -i sine=440
-   -shortest master.mp4` → ingest → transcript → cut → export → render → verificar
-   MP4 en .abraxas-data/renders/. Commit pequeño por paso, verificar disco siempre.
+## 4. GOTCHAS YA RESUELTOS (no reintroducir)
+- ffmpeg: '-shortest' acorta el vídeo al audio → -ss tras el EOF produce 0 frames con exit 0 y
+  stderr vacío. Patrón: escalera de seeks descendente validando salida (grabFrame, makeFilmstrip).
+- Filtergraph: SOLO doble backslash-escape de dos niveles (escapeFilterPath) — comillas rompen el parser.
+- renderFinal escala la BASE a 1080x1920 (overlay toma dims del primer input).
+- autoWindows: partición entera [floor(i·N/c), floor((i+1)·N/c)) — floor/ceil rompe contigüidad.
+- vitest.config.ts: fileParallelism:false — NO quitar (E2E real-media en paralelo flaquea).
+- E2E gated (HAS_FFMPEG/HAS_SAY/BACKEND) se saltan honestos en CI sin MLX; en este Mac corren
+  (mlx-community/whisper-large-v3-turbo cacheada; whisper-cli sin ggml → Doctor binario PASS/modelo SKIP).
+- Edición con scripts: verifica SIEMPRE tras escribir (grep) — un assert a mitad deja estado híbrido.
 
-## 3. Después (en orden) — mapa completo en docs/REQUISITOS_MAESTROS.md
+## 5. MILESTONES RESTANTES (PRs separados hacia dev/vav-complete)
+M7 — XR/Visual Packs: pack registry (manifest+schema+tokens+preview+tests) para
+  TYPO/PHOTOS/OBJECTS/COMIC_INFO/COMIC_CC/DATA_STORY/LIQUID_GLASS; adapter ProductionGraph→
+  Remotion/VideoFlow (RenderSpec ya existe en packages/motion). Gate: 1 pack XR base REAL E2E.
+M8 — Review: notas por rango, approve/reject/compare sobre Pieces/renders + auditoría del repo
+  LordJeferies/Abrxs-Review (preserva lo útil, moderniza).
+M9 — Delivery: DAVINCI_PACKAGE (TIMELINE.json compilado del grafo, EDIT_PLAN.txt, ASSET_MANIFEST)
+  + CAPCUT_PACKAGE + assets-only/SRT/ASS. El plan se COMPILA del ProductionGraph.
+M10 — Workflow Studio: nodos XYFlow (INPUT/ANALYSIS/AI/MEDIA/ABRAXAS/LOGIC/OUTPUT); recipes
+  expuestas también en ActionCatalog.
+M11 — Browser/external generation: BrowserGenerationAdapter (local→API→MCP→browser→manual) sin
+  saltarse CAPTCHA/paywalls; GENERATE AI PACKAGE + IMPORT RESULT.
+M12 — Preproducción script-only + faceless (script→TTS/VO→plan→captions→render).
+M13 — Estabilidad/instalador/release pipeline (INSTALL_MAC, codesign, doctor completo).
+M14–M17 — Geómetra VX, Brand Creator VX, Builder VX, Canvases VX (AUDIT de repos propios primero;
+  ContentPotential→ContentSpec con contracts canónicos).
+M18 — Full Studio: shells standalone (Abrxs Canter.app, Dresser.app…) montando los MISMOS módulos.
+M19 — Release Candidate: docs/RELEASE_CANDIDATE.md + PR dev/vav-complete→main (NO mergear).
+DEUDA DE UI (intercala donde encaje): browsing de assets en Visual Lab, UI Dresser,
+wizard de Clients, shells standalone.
 
-Paso 2: Whisper MLX + adapter Canter 3.8.1 (necesita máster real del usuario) ·
-Paso 3: Kanban/Mapa XYFlow · Paso 4: companion PWA iPhone + Supabase (workspace
-`abrxs-vav`, tablas vav_state/vav_commands — SQL en docs/CLOUD_AND_PROVIDERS.md) +
-Drive readonly-first + comandos precargados offline · Paso 5: Dresser batch 20
-verticales + QA de píxeles (necesita keys Pexels/Pixabay del usuario) · Paso 6:
-ComfyUI + compare A/B + strict free mode · Paso 7: bundle Remotion + prop controls
-por MCP + familias XR completas + variants · Paso 8: kits FCPXML/EDL/CapCut +
-reporte de licencias + reference render · Paso 9: Workflow Studio recipes + Review ·
-Paso 10: empaquetado Tauri .app + updater + Faceless + i18n.
+## 6. DEFINITION OF DONE POR MILESTONE
+[ ] contracts aditivos + schemas regenerados (npm run contracts:generate)
+[ ] implementación real + persistencia · tests (unit + E2E gated real cuando aplique media)
+[ ] npm run check ✓ · npm test ✓ · npm run test:media ✓ · npm run build ✓ · npm run doctor exit 0
+[ ] CI green en el PR · mergeable=true · merge con --match-head-commit <SHA>
+[ ] CHANGELOG.md + docs/IMPLEMENTATION_STATUS.md (REAL/MOCK/PENDING honesto) + ROADMAP.txt
+[ ] docs/PROJECT_STATUS.json actualizado · VAVStatus lo refleja (lee dev/vav-complete)
+[ ] sin secretos · sin regresiones (3 corridas de npm test en verde si tocaste media)
 
-## 4. REGLAS DE ORO (no negociables)
+## 7. GIT
+Rama feature/m<N>-<nombre> desde dev/vav-complete · commits pequeños Conventional Commits ·
+PR → dev/vav-complete · CI verde + mergeable → merge · pull + suite completa en verde · siguiente.
+push normal (—force-with-lease solo tras rebase explícito, jamás --force).
 
-- Lee PRIMERO: `docs/REQUISITOS_MAESTROS.md` (todos los requisitos con estado),
-  `docs/00_ABRSX_VAV_ADDENDUM.md` (gana conflictos), `CONTINUITY.txt`, `AGENTS.md`.
-- Tiempo = frames (out exclusivo). Production Graph = única verdad. Todo por MCP
-  (ActionCatalog). La IA propone, el humano aprueba. MoneyPrinterTurbo = motor solo
-  (⛔ task.py). Prohibido código AGPL/PolyForm. LiquidGlass SOLO capa UI. TYPO y
-  renders deterministas jamás a IA. Zoom ≤ 1.18. Escrituras atómicas siempre.
-- Verifica en disco tras CADA resultado sospechoso (ha habido resultados de
-  herramientas fabricados en sesiones largas; el disco siempre fue coherente).
-  Sesiones cortas, commits pequeños con push, actualizar ROADMAP/CHANGELOG/
-  CONTINUITY/IMPLEMENTATION_STATUS en cada hito. "npm run check && npm test &&
-  npm run build" antes de empezar y antes de cada commit.
-- Al terminar cada bloque: mover checkbox en ROADMAP.txt y actualizar la línea
-  "SIGUIENTE ACCIÓN" (el sitio status.html lee eso en vivo).
+## 8. SI TE QUEDAS SIN CONTEXTO
+Actualiza ANTES: CONTINUITY.txt (estado + siguiente acción EXACTA), ROADMAP.txt,
+docs/IMPLEMENTATION_STATUS.md, docs/PROJECT_STATUS.json, CHANGELOG.md.
+Debe poder continuar otra sesión sin reconstruir contexto.
+
+## 9. EMPIEZA AHORA
+1) inspección §1 → 2) M7 XR/Visual Packs (feature/m7-visual-packs) → 3) M8→M19 con el DoD →
+al cerrar cada milestone informa solo: MILESTONE / HECHO / TESTS / PR / STATUS / VAVSTATUS / NEXT.
+GitHub es la verdad. main permanece estable. dev/vav-complete es la integración. EJECUTA.
